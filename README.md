@@ -1,2 +1,2 @@
-# connector-postgres
-Node postgres connector 
+# Connector - Postgres
+Simplifies postgres database connections from node applications.
