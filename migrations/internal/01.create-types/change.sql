@@ -1,0 +1,3 @@
+CREATE TYPE action_type AS ENUM ('CHANGE', 'ROLLBACK');
+CREATE TYPE migration_status AS ENUM ('QUEUED', 'SUCCESS', 'FAILURE', 'IGNORED');
+CREATE TYPE failure_action AS ENUM ('SKIP', 'ROLLBACK', 'FAIL');

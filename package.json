@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "description": "Node postgres connector",
   "main": "index.js",
+  "module": "esm",
+  "type": "module",
   "scripts": {
+    "start": "TS_NODE_PROJECT='./tsconfig.json' node --loader ts-node/esm --es-module-specifier-resolution=node src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -15,10 +18,25 @@
     "node",
     "postgres"
   ],
-  "author": "etauker",
+  "author": {
+    "name": "Tautvydas Kersulis",
+    "email": "etauker@gmail.com"
+  },
   "license": "UNLICENCED",
   "bugs": {
     "url": "https://github.com/etauker/connector-postgres/issues"
   },
-  "homepage": "https://github.com/etauker/connector-postgres#readme"
+  "homepage": "https://github.com/etauker/connector-postgres#readme",
+  "dependencies": {
+    "esm": "^3.2.25",
+    "pg": "^8.6.0",
+    "pg-pool": "^3.3.0",
+    "typescript": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/node": "^16.3.3",
+    "@types/pg": "^8.6.1",
+    "@types/pg-pool": "^2.0.3",
+    "ts-node": "^10.1.0"
+  }
 }
