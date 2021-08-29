@@ -1,11 +1,11 @@
-CREATE TABLE migration (
+CREATE TABLE IF NOT EXISTS migration (
     id              uuid            PRIMARY KEY,
     name            varchar(255)    UNIQUE NOT NULL,
-    order           int             ,
-    on_failure      failure_action  NOT NULL DEFAULT 'FAIL'
+    execution_index int             ,
+    on_failure      failure_action  NOT NULL DEFAULT 'STOP'
 );
 
-CREATE TABLE change (
+CREATE TABLE IF NOT EXISTS change (
     migration_id    uuid                ,
     hash            varchar(255)        ,
     status          migration_status    NOT NULL DEFAULT 'QUEUED',
@@ -14,7 +14,7 @@ CREATE TABLE change (
     executed_at     timestamp without time zone    NOT NULL DEFAULT now()
 );
 
-CREATE TABLE rollback (
+CREATE TABLE IF NOT EXISTS rollback (
     migration_id    uuid                ,
     hash            varchar(255)        ,
     status          migration_status    NOT NULL DEFAULT 'IGNORED',
@@ -23,7 +23,7 @@ CREATE TABLE rollback (
     executed_at     timestamp without time zone    NOT NULL DEFAULT now()
 );
 
-CREATE TABLE history (
+CREATE TABLE IF NOT EXISTS history (
     action_id       uuid                            ,
     action_type     action_type                     NOT NULL, 
     date_time       timestamp without time zone      NOT NULL DEFAULT now()

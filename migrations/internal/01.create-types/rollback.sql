@@ -1,3 +1,3 @@
-DROP TYPE failure_action;
-DROP TYPE migration_status;
-DROP TYPE action_type;
+DROP TYPE IF EXISTS failure_action CASCADE;
+DROP TYPE IF EXISTS migration_status CASCADE;
+DROP TYPE IF EXISTS action_type CASCADE;
