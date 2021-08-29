@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { IPersistenceService } from '../../src/persistence-service.interface';
+import { IPersistenceService } from '../../src/persistence/persistence-service.interface';
 
 // TODO:
 // - implement migrations

@@ -17,21 +17,20 @@ export class PersistenceService implements IPersistenceService {
     public async query<T>(sql: string, params: any[] = []): Promise<IPersistenceResult<T>> {
         const client = await this.pool.connect();
         return client.query<T>(sql, params)
-            .then(response => this.mapQueryResultToPersistenceResult<T>(response))
+            .then(response => this.mapQueryResultToPersistenceQueryResult<T>(response))
             .finally(() => client.release())
         ;
     }
 
-    public async update<T>(sql: string, params: any[] = []): Promise<IPersistenceResult<T>> {
+    public async update<T>(sql: string, params?: any[]): Promise<any> {
         const client = await this.pool.connect();
-        let results: IPersistenceResult<T>
+        let statementCount: number;
 
         return client.query('BEGIN')
-            .then(() => client.query<T>(sql, params))
-            .then(response => this.mapQueryResultToPersistenceResult<T>(response))
-            .then(res => results = res)
+            .then(() => client.query(sql, params))
+            .then((res: any) => statementCount = res.length)
             .then(() => client.query('COMMIT'))
-            .then(() => results)
+            .then(() => statementCount)
             .catch(e => {
                 client.query('ROLLBACK');
                 throw e;
@@ -40,7 +39,7 @@ export class PersistenceService implements IPersistenceService {
         ;
     }
 
-    public mapQueryResultToPersistenceResult<T>(input: pg.QueryResult<T>): IPersistenceResult<T> {
+    public mapQueryResultToPersistenceQueryResult<T>(input: pg.QueryResult<T>): IPersistenceResult<T> {
         return {
             created: input.command === 'CREATE' ? input.rowCount : 0,
             updated: input.command === 'UPDATE' ? input.rowCount : 0,

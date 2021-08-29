@@ -1,15 +1,16 @@
 import assert from 'assert';
 import { IIntegrationTest } from './integration-test.interface';
-import { IPersistenceService } from '../src/persistence-service.interface';
+import { IPersistenceService } from '../src/persistence/persistence-service.interface';
 import { IIntegrationTestSummary } from './integration-test-summary.interface';
 import { IIntegrationTestConfiguration } from './integration-test-configuration.interface';
 import { IIntegrationTestModule } from './integration-test-module.interface';
+import { IMigrationService } from '../src/migration/migration-service.interface';
 
 
 export class IntegrationTestFramework {
 
-    public testConnection(service: IPersistenceService): Promise<boolean> {
-        return this.getPostgresVersion(service)
+    public testConnection(persistenceService: IPersistenceService, migrationService: IMigrationService): Promise<boolean> {
+        return this.getPostgresVersion(persistenceService)
             .then(version => {
                 console.log('');
                 console.log('Integration tests running against postgres server:');
@@ -28,8 +29,8 @@ export class IntegrationTestFramework {
         ;
     }
     
-    public getPostgresVersion(service: IPersistenceService): Promise<string> {
-        return service
+    public getPostgresVersion(persistenceService: IPersistenceService): Promise<string> {
+        return persistenceService
             .query<{ version: string }>('SELECT version();')
             .then(res => res.results[0].version)
         ;
@@ -42,11 +43,11 @@ export class IntegrationTestFramework {
     }
     
     public executeTest(
-        service: IPersistenceService,
+        persistenceService: IPersistenceService,
         test: IIntegrationTest
     ): Promise<IIntegrationTestSummary> {
         return test
-            .run(service)
+            .run(persistenceService)
             .then(result => {
                 const status = result.success ? 'SUCCESS' : 'FAILURE';
                 console.log(`[${status}] ${test.suite} - ${test.name}`);
@@ -82,6 +83,9 @@ export class IntegrationTestFramework {
                 max: 5,
                 idleTimeoutMillis: 1000, // close idle clients after 1 second
                 connectionTimeoutMillis: 1000, // return an error after 1 second if connection could not be established
+            },
+            migrationConfig: {
+                debug: true,
             }
         });
     }
