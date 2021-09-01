@@ -22,21 +22,21 @@ export class MigrationRepository {
             INSERT INTO public.migration (id, name) VALUES
             ('${migration.id}', '${migration.name}')
             ON CONFLICT DO NOTHING;
-        `;
-        const changeInsert = `
-            INSERT INTO public.change (migration_id, hash) VALUES
-            ('${migration.id}', '${migration.change.hash}')
-            ON CONFLICT (hash)
-                DO UPDATE SET status = '${migration.change.status}';
-        `;
-        const rollbackInsert = `
-            INSERT INTO public.rollback (migration_id, hash) VALUES
-            ('${migration.id}', '${migration.rollback.hash}')
-            ON CONFLICT (hash)
-                DO UPDATE SET status = '${migration.rollback.status}';
+
+            INSERT INTO public.change (migration_id, hash, status) VALUES
+            ('${migration.id}', '${migration.change.hash}', '${migration.change.status}')
+            ON CONFLICT (hash) DO UPDATE SET 
+                status = '${migration.change.status}',
+                executed_at = NOW();
+
+            INSERT INTO public.rollback (migration_id, hash, status) VALUES
+            ('${migration.id}', '${migration.rollback.hash}', '${migration.rollback.status}')
+            ON CONFLICT (hash) DO UPDATE SET 
+                status = '${migration.rollback.status}',
+                executed_at = NOW();
         `;
 
-        return this.persistenceService.update(migrationInsert + changeInsert + rollbackInsert)
+        return this.persistenceService.update(migrationInsert)
             .then(res => {
                 // console.log(res);
                 return true;
