@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { IPersistenceClient } from './persistence-client.interface';
 const { Pool } = pg;
 
 import { IPersistenceConfiguration } from './persistence-configuration.interface';
@@ -22,20 +23,40 @@ export class PersistenceService implements IPersistenceService {
         ;
     }
 
-    public async update<T>(sql: string, params?: any[]): Promise<any> {
-        const client = await this.pool.connect();
-        let statementCount: number;
+    public startTransaction(): Promise<IPersistenceClient> {
+        let client: IPersistenceClient;
+        return this.pool.connect()
+            .then(c => client = c)
+            .then(() => client.query('BEGIN'))
+            .then(() => client)
+        ;
+    }
 
-        return client.query('BEGIN')
+    public stopTransaction(client: IPersistenceClient, commit: boolean): Promise<void> {
+        const command = commit ? 'COMMIT' : 'ROLLBACK';
+        return new Promise((resolve, reject) => {
+            client.query(command).finally(() => {
+                client.release();
+                resolve();
+            });
+        })
+    }
+
+    public async update<T>(sql: string, params?: any[]): Promise<any> {
+        let client: IPersistenceClient;
+        let count: number;
+
+        return this.startTransaction()
+            .then(poolClient => client = poolClient)
             .then(() => client.query(sql, params))
-            .then((res: any) => statementCount = res.length)
-            .then(() => client.query('COMMIT'))
-            .then(() => statementCount)
+            .then((res: any) => count = res.length)
+            .then(() => this.stopTransaction(client, true))
+            .then(() => count)
             .catch(e => {
-                client.query('ROLLBACK');
-                throw e;
+                return this.stopTransaction(client, false).then(() => {
+                    throw e;
+                });
             })
-            .finally(() => client.release())
         ;
     }
 
