@@ -30,7 +30,7 @@ export class MigrationService implements IMigrationService {
     public setup(): Promise<boolean> {
         let metadata: IMigration[];
 
-        this.debug('setting up database migrations');
+        this.debug('setting up database migrations...');
         return MigrationLoader
             .loadMigrationMetadata(this.internalMigrationRoot)
             .then(meta => metadata = meta)
@@ -48,13 +48,13 @@ export class MigrationService implements IMigrationService {
      * Delete all migration tables.
      */
     public clear(): Promise<boolean> {
-        let metadata: IMigrationItem<'ROLLBACK'>[];
+        let metadata: IMigration[];
 
-        this.debug('setting up database migrations');
+        this.debug('starting database rollbacks...');
         return MigrationLoader
             .loadMigrationMetadata(this.internalMigrationRoot)
-            .then(meta => metadata = meta.reverse().map(mig => mig.rollback))
-            .then(() => this.executeSequentialMigrationItems(metadata))
+            .then(meta => metadata = meta.reverse())
+            .then(() => this.executeSequentialRollbacks(metadata))
             .then(result => {
                 if (result === true) return result;
                 else throw new Error('Some migrations failed to execute');
@@ -71,7 +71,7 @@ export class MigrationService implements IMigrationService {
         const queueMigration = (previous: Promise<boolean>, i: number): Promise<boolean> => {
             if (i >= migrations.length) {
                 this.debug('');
-                this.debug('all migrations completed');
+                this.debug('...all migrations completed');
                 return previous;
             }
 
@@ -93,25 +93,30 @@ export class MigrationService implements IMigrationService {
      * Execute multiple database migration items in sequence.
      * If any of the migrations items fail, the following migrations items will not be executed.
      */
-        private executeSequentialMigrationItems<T extends IMigrationItemType>(
-            migrations: IMigrationItem<T>[],
+        private executeSequentialRollbacks(
+            migrations: IMigration[],
         ): Promise<boolean> {
 
         const queueMigration = (previous: Promise<boolean>, i: number): Promise<boolean> => {
             if (i >= migrations.length) {
                 this.debug('');
-                this.debug('all migration items completed');
+                this.debug('...all rollbacks completed');
                 return previous;
             }
-
+            
             this.debug('');
-            this.debug(`${migrations[i].migrationId}: queueing migration`);
+            this.debug(`${migrations[i].name}: rolling back migration`);
             return previous
-                .then(() => this.executeMigrationScript(migrations[i].script))
-                .then(isSuccessful => isSuccessful
-                    ? queueMigration(Promise.resolve(true), i + 1)
-                    : false
-                )
+                .then(() => this.executeMigrationScript(migrations[i].rollback.script))
+                .then(isSuccessful => {
+                    if (isSuccessful) {
+                        this.debug(`${migrations[i].name}: rolled back successfully`);
+                        return queueMigration(Promise.resolve(true), i + 1);
+                    } else {
+                        this.debug(`${migrations[i].name}: failed to roll back`);
+                        return false;
+                    }
+                })
             ;
         }
 

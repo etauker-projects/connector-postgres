@@ -11,7 +11,10 @@ CREATE TABLE IF NOT EXISTS change (
     status          migration_status    NOT NULL DEFAULT 'QUEUED',
     -- script          text                NOT NULL,
     created_at      timestamp without time zone    NOT NULL DEFAULT now(), 
-    executed_at     timestamp without time zone    NOT NULL DEFAULT now()
+    executed_at     timestamp without time zone    NOT NULL DEFAULT now(),
+    CONSTRAINT migration_change_FK
+    FOREIGN KEY(migration_id) 
+    REFERENCES migration(id)
 );
 
 CREATE TABLE IF NOT EXISTS rollback (
@@ -20,7 +23,10 @@ CREATE TABLE IF NOT EXISTS rollback (
     status          migration_status    NOT NULL DEFAULT 'IGNORED',
     -- script          text                NOT NULL,
     created_at      timestamp without time zone    NOT NULL DEFAULT now(), 
-    executed_at     timestamp without time zone    NOT NULL DEFAULT now()
+    executed_at     timestamp without time zone    NOT NULL DEFAULT now(),
+    CONSTRAINT migration_change_FK
+    FOREIGN KEY(migration_id) 
+    REFERENCES migration(id)
 );
 
 CREATE TABLE IF NOT EXISTS history (
