@@ -1,7 +1,7 @@
 import pg from 'pg';
-import { IPersistenceClient } from './persistence-client.interface';
 const { Pool } = pg;
 
+import { IPersistenceClient } from './persistence-client.interface';
 import { IPersistenceConfiguration } from './persistence-configuration.interface';
 import { IPersistenceResult } from './persistence-results.interface';
 import { IPersistenceService } from './persistence-service.interface';
@@ -18,7 +18,7 @@ export class PersistenceService implements IPersistenceService {
     public async query<T>(sql: string, params: any[] = []): Promise<IPersistenceResult<T>> {
         const client = await this.pool.connect();
         return client.query<T>(sql, params)
-            .then(response => this.mapQueryResultToPersistenceQueryResult<T>(response))
+            .then(response => PersistenceService.mapQueryResultToPersistenceQueryResult<T>(response))
             .finally(() => client.release())
         ;
     }
@@ -42,6 +42,16 @@ export class PersistenceService implements IPersistenceService {
         })
     }
 
+    public transact<T>(
+        client: IPersistenceClient,
+        sql: string,
+        params: any[] = []
+    ): Promise<IPersistenceResult<T>> {
+        return client.query<T>(sql, params)
+            .then(response => PersistenceService.mapQueryResultToPersistenceQueryResult<T>(response))
+        ;
+    }
+
     public async update<T>(sql: string, params?: any[]): Promise<any> {
         let client: IPersistenceClient;
         let count: number;
@@ -60,11 +70,22 @@ export class PersistenceService implements IPersistenceService {
         ;
     }
 
-    public mapQueryResultToPersistenceQueryResult<T>(input: pg.QueryResult<T>): IPersistenceResult<T> {
+    public static mapQueryResultToPersistenceQueryResult<T>(input: pg.QueryResult<T>): IPersistenceResult<T> {
+        const supported = [
+            'CREATE',
+            'UPDATE',
+            'DELETE',
+            'INSERT',
+            'SELECT',
+        ]
+        if (!supported.includes(input.command)) {
+            console.error(`Command '${input.command}' not supported`);
+        }
         return {
             created: input.command === 'CREATE' ? input.rowCount : 0,
             updated: input.command === 'UPDATE' ? input.rowCount : 0,
             deleted: input.command === 'DELETE' ? input.rowCount : 0,
+            inserted: input.command === 'INSERT' ? input.rowCount : 0,
             results: input.command === 'SELECT' && input.rows || [],
         }
     }

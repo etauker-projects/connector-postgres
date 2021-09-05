@@ -1,9 +1,10 @@
 export type IMigrationItemType = 'CHANGE' | 'ROLLBACK';
+export type IMigrationItemStatus = 'QUEUED' | 'SUCCESS' | 'FAILURE' | 'IGNORED';
 
 export interface IMigrationItem<IMigrationItemType> {
     migrationId: string;
     hash: string;
-    status: 'QUEUED' | 'SUCCESS' | 'FAILURE' | 'IGNORED';
+    status: IMigrationItemStatus;
     script: string;
     createdAt?: string;
     executedAt?: string;
