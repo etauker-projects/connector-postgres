@@ -9,47 +9,54 @@ export class MigrationRepository {
         this.persistenceService = persistenceService;
     }
 
-    public saveMigrationMetadata(migrations: IMigration[]): Promise<boolean> {
+    //------------------------------
+    // Public methods
+    //------------------------------
+    public saveMultipleMigrationMetadata(migrations: IMigration[]): Promise<boolean> {
         return Promise
-            .all(migrations.map(migration => this.saveSingleMigration(migration)))
+            .all(migrations.map(migration => this.saveSingleMigrationMetadata(migration)))
             .then(results => true)
         ;
     }
 
-    public async saveSingleMigration(migration: IMigration): Promise<boolean> {
-        const client = await this.persistenceService.startTransaction();
-        const transact = this.persistenceService.transact.bind(this, client);
+    public saveSingleMigrationMetadata(migration: IMigration): Promise<boolean> {
 
-        try {
-            const query = `SELECT * FROM public.migration WHERE name = '${migration.name}';`;
-            const saved = (await transact(query)).results[0] as IMigration;
+        return this.persistenceService.startTransaction().then(async client => {
+            const transact = this.persistenceService.continueTransaction.bind(this, client);
 
-            if (saved) {
-                await this.verifyChangeIntegrity(saved, migration, transact);
-                await this.verifyRollbackIntegrity(saved, migration, transact);
-            } else {
-                await this.insertMigration(migration.id, migration.name, transact);
-                await this.insertChange(migration.id, migration.change.hash, migration.change.status, transact);
-                await this.insertRollback(migration.id, migration.rollback.hash, migration.rollback.status, transact);
+            try {
+                const query = `SELECT * FROM public.migration WHERE name = '${migration.name}';`;
+                const saved = (await transact(query)).results[0] as IMigration;
+
+                if (saved) {
+                    await this.verifyChangeIntegrity(saved, migration, transact);
+                    await this.verifyRollbackIntegrity(saved, migration, transact);
+                } else {
+                    await this.insertMigration(migration.id, migration.name, transact);
+                    await this.insertChange(migration.id, migration.change.hash, migration.change.status, transact);
+                    await this.insertRollback(migration.id, migration.rollback.hash, migration.rollback.status, transact);
+                }
+
+                // } else if (entry?.change?.status !== migration.change?.status) {
+                //     // update status and executed as part of insert?
+                // }
+
+            } catch (e) {
+                return this.persistenceService
+                    .endTransaction(client, true)
+                    .then(() => Promise.reject(e))
+                ;
             }
-
-            // } else if (entry?.change?.status !== migration.change?.status) {
-            //     // update status and executed as part of insert?
-            // }
-
-        } catch (e) {
             return this.persistenceService
-                .stopTransaction(client, true)
-                .then(() => Promise.reject(e))
+                .endTransaction(client, true)
+                .then(() => true)
             ;
-        }
-        return this.persistenceService
-            .stopTransaction(client, true)
-            .then(() => true)
-        ;
-
+        });
     }
 
+    //------------------------------
+    // Private methods
+    //------------------------------
     private async insertMigration(id: string, name: string, transact: Function) {
         const query = `INSERT INTO public.migration (id, name) VALUES ('${id}', '${name}');`;
         return transact(query);

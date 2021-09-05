@@ -3,7 +3,7 @@ import path from 'path';
 import { IPersistenceService } from '../persistence/persistence-service.interface';
 import { IMigrationConfiguration } from './migration-configuration.interface';
 import { IMigrationService } from './migration-service.interface';
-import { IMigration, IMigrationItem, IMigrationItemType } from './migration.interface';
+import { IMigration } from './migration.interface';
 import { MigrationLoader } from './migration-loader';
 import { MigrationRepository } from './migration-repository';
 
@@ -35,7 +35,7 @@ export class MigrationService implements IMigrationService {
             .loadMigrationMetadata(this.internalMigrationRoot)
             .then(meta => metadata = meta)
             .then(() => this.executeSequentialMigrations(metadata))
-            .then(() => this.migrationRepository.saveMigrationMetadata(metadata))
+            .then(() => this.migrationRepository.saveMultipleMigrationMetadata(metadata))
             .then(result => {
                 if (result === true) return result;
                 else throw new Error('Some migrations failed to execute');
@@ -63,6 +63,16 @@ export class MigrationService implements IMigrationService {
     }
 
     /**
+     * Execute the provided migration (change or rollback) file and return the number of executed statements.
+     */
+     public executeMigrationFile(fullPath: string): Promise<number> {
+        return fs
+            .readFile(fullPath, { encoding: 'utf-8' })
+            .then(sql => this.persistenceService.update(sql, []))
+        ;
+    }
+
+    /**
      * Execute multiple database migrations in sequence.
      * If any of the migrations fail, the following migrations will not be executed.
      */
@@ -71,8 +81,16 @@ export class MigrationService implements IMigrationService {
         const queueMigration = (previous: Promise<boolean>, i: number): Promise<boolean> => {
             if (i >= migrations.length) {
                 this.debug('');
-                this.debug('...all migrations completed');
-                return previous;
+
+                return previous.then(result => {
+                    if (result) {
+                        this.debug('...all migrations completed successfully');
+                        return true;
+                    } else {
+                        this.debug('...some migrations failed');
+                        throw Error('Some migrations failed to complete');
+                    }
+                })
             }
 
             this.debug('');
@@ -93,9 +111,7 @@ export class MigrationService implements IMigrationService {
      * Execute multiple database migration items in sequence.
      * If any of the migrations items fail, the following migrations items will not be executed.
      */
-        private executeSequentialRollbacks(
-            migrations: IMigration[],
-        ): Promise<boolean> {
+        private executeSequentialRollbacks(migrations: IMigration[]): Promise<boolean> {
 
         const queueMigration = (previous: Promise<boolean>, i: number): Promise<boolean> => {
             if (i >= migrations.length) {
@@ -147,16 +163,6 @@ export class MigrationService implements IMigrationService {
                     .then(() => migration.rollback.status = 'FAILURE')
                     .then(() => false);
             })
-        ;
-    }
-
-    /**
-     * Execute the provided migration (change or rollback) file and return the number of executed statements.
-     */
-    public executeMigrationFile(fullPath: string): Promise<number> {
-        return fs
-            .readFile(fullPath, { encoding: 'utf-8' })
-            .then(sql => this.persistenceService.update(sql, []))
         ;
     }
 

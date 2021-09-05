@@ -15,14 +15,9 @@ export class PersistenceService implements IPersistenceService {
         this.pool = new Pool(config);
     }
 
-    public async query<T>(sql: string, params: any[] = []): Promise<IPersistenceResult<T>> {
-        const client = await this.pool.connect();
-        return client.query<T>(sql, params)
-            .then(response => PersistenceService.mapQueryResultToPersistenceQueryResult<T>(response))
-            .finally(() => client.release())
-        ;
-    }
-
+    //------------------------------
+    // Public methods
+    //------------------------------
     public startTransaction(): Promise<IPersistenceClient> {
         let client: IPersistenceClient;
         return this.pool.connect()
@@ -32,7 +27,18 @@ export class PersistenceService implements IPersistenceService {
         ;
     }
 
-    public stopTransaction(client: IPersistenceClient, commit: boolean): Promise<void> {
+    public continueTransaction<T>(
+        client: IPersistenceClient,
+        sql: string,
+        params: any[] = []
+    ): Promise<IPersistenceResult<T>> {
+        return client
+            .query<T>(sql, params)
+            .then(response => PersistenceService.mapQueryResultToPersistenceQueryResult<T>(response))
+        ;
+    }
+
+    public endTransaction(client: IPersistenceClient, commit: boolean): Promise<void> {
         const command = commit ? 'COMMIT' : 'ROLLBACK';
         return new Promise((resolve, reject) => {
             client.query(command).finally(() => {
@@ -42,17 +48,16 @@ export class PersistenceService implements IPersistenceService {
         })
     }
 
-    public transact<T>(
-        client: IPersistenceClient,
-        sql: string,
-        params: any[] = []
-    ): Promise<IPersistenceResult<T>> {
-        return client.query<T>(sql, params)
-            .then(response => PersistenceService.mapQueryResultToPersistenceQueryResult<T>(response))
+    public query<T>(sql: string, params: any[] = []): Promise<IPersistenceResult<T>> {
+        let client: IPersistenceClient;
+        return this.startTransaction()
+            .then(c => client = c)
+            .then(() => this.continueTransaction<T>(client, sql, params))
+            .finally(() => this.endTransaction(client, true))
         ;
     }
 
-    public async update<T>(sql: string, params?: any[]): Promise<any> {
+    public update<T>(sql: string, params?: any[]): Promise<any> {
         let client: IPersistenceClient;
         let count: number;
 
@@ -60,10 +65,10 @@ export class PersistenceService implements IPersistenceService {
             .then(poolClient => client = poolClient)
             .then(() => client.query(sql, params))
             .then((res: any) => count = res.length)
-            .then(() => this.stopTransaction(client, true))
+            .then(() => this.endTransaction(client, true))
             .then(() => count)
             .catch(e => {
-                return this.stopTransaction(client, false).then(() => {
+                return this.endTransaction(client, false).then(() => {
                     throw e;
                 });
             })
@@ -71,21 +76,16 @@ export class PersistenceService implements IPersistenceService {
     }
 
     public static mapQueryResultToPersistenceQueryResult<T>(input: pg.QueryResult<T>): IPersistenceResult<T> {
-        const supported = [
-            'CREATE',
-            'UPDATE',
-            'DELETE',
-            'INSERT',
-            'SELECT',
-        ]
+        const supported = [ 'INSERT', 'UPDATE', 'DELETE', 'SELECT' ];
+
         if (!supported.includes(input.command)) {
-            console.error(`Command '${input.command}' not supported`);
+            console.warn(`Command '${input.command}' not supported`);
         }
+
         return {
-            created: input.command === 'CREATE' ? input.rowCount : 0,
+            created: input.command === 'INSERT' ? input.rowCount : 0,
             updated: input.command === 'UPDATE' ? input.rowCount : 0,
             deleted: input.command === 'DELETE' ? input.rowCount : 0,
-            inserted: input.command === 'INSERT' ? input.rowCount : 0,
             results: input.command === 'SELECT' && input.rows || [],
         }
     }
