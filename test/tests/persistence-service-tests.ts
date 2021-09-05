@@ -2,8 +2,6 @@ import assert from 'assert';
 import { IPersistenceService } from '../../src/persistence/persistence-service.interface';
 
 // TODO:
-// - implement migrations
-// - run migration to create integration test table
 // - read from the table
 // - insert into the table
 // - read from the table
@@ -12,7 +10,7 @@ import { IPersistenceService } from '../../src/persistence/persistence-service.i
 // - delete from the table
 // - read from the table
 
-const tests = [   
+const tests = [
     {
         suite: 'Persistence Service',
         name: 'should return correct results on select',

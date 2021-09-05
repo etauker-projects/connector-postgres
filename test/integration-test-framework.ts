@@ -1,4 +1,5 @@
 import assert from 'assert';
+import * as pathModule from 'path';
 import { IIntegrationTest } from './integration-test.interface';
 import { IPersistenceService } from '../src/persistence/persistence-service.interface';
 import { IIntegrationTestSummary } from './integration-test-summary.interface';
@@ -35,11 +36,20 @@ export class IntegrationTestFramework {
             .then(res => res.results[0].version)
         ;
     }
-    
+
+    public runMigrationChanges(migrationService: IMigrationService, path: string): Promise<void> {
+        return migrationService.executeChange(path);
+    }
+
+    public runMigrationRollbacks(migrationService: IMigrationService, path: string): Promise<void> {
+        return migrationService.executeRollback(path);
+    }
+
     // Test file must export IIntegrationTestModule object
-    public loadTests(rootPath: string): Promise<IIntegrationTest[]> {
+    public loadTests(testFilePath: string): Promise<IIntegrationTest[]> {
         // TODO: recursively iterate over files under rootPath
-        return import(rootPath).then((mod: IIntegrationTestModule) => mod.tests);
+        const path = pathModule.resolve(testFilePath, 'persistence-service-tests.ts');
+        return import(path).then((mod: IIntegrationTestModule) => mod.tests);
     }
     
     public executeTest(

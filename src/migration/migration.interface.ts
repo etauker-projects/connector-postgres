@@ -12,10 +12,17 @@ export interface IMigrationItem<IMigrationItemType> {
     type: IMigrationItemType;
 }
 
+export interface IRollback extends IMigrationItem<'ROLLBACK'> {
+    type: 'ROLLBACK';
+}
+
+export interface IChange extends IMigrationItem<'CHANGE'> {
+    type: 'CHANGE';
+}
+
 export interface IMigration {
     id: string;
     name: string;
-    // on_failure: 'STOP' | 'SKIP' | 'ROLLBACK';
-    change: IMigrationItem<'CHANGE'>;
-    rollback: IMigrationItem<'ROLLBACK'>;
+    change: IChange;
+    rollback: IRollback;
 }

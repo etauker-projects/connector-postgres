@@ -11,7 +11,9 @@ let persistenceService: IPersistenceService;
 let migrationService: IMigrationService;
 
 const configPath = ''; // TODO get from parameters
-const rootPath = path.resolve(process.cwd(), './test/tests/persistence-service-tests.ts'); // TODO get from parameters
+const rootPath = path.resolve(process.cwd(), 'test'); // TODO get from parameters
+const testFileRoot = path.resolve(rootPath, 'tests');
+const testMigrationPath = path.resolve(rootPath, 'migrations');
 const framework = new IntegrationTestFramework();
 
 framework.loadTestConfig(configPath)
@@ -22,18 +24,21 @@ framework.loadTestConfig(configPath)
 
     .then(() => new MigrationService(testConfig.migrationConfig, persistenceService))
     .then(service => migrationService = service)
-    // .then(() => migrationService.clear())
+    .then(() => migrationService.clear())
     .then(() => migrationService.setup())
 
     .then(() => framework.testConnection(persistenceService, migrationService))
+    .then(() => framework.runMigrationChanges(migrationService, testMigrationPath))
+    
+    .then(() => framework.loadTests(testFileRoot))
+    .then(tests => {
+        const testPromises = tests.map(test => framework.executeTest(persistenceService, test));
+        return Promise.all(testPromises);
+    })
+    .then(() => framework.runMigrationRollbacks(migrationService, testMigrationPath))
+    .then(() => process.exit(0))
     .catch((err) => {
         console.error('Error:', err.message);
         process.exit(1);
-    })
-
-    .then(() => framework.loadTests(rootPath))
-    .then(tests => {
-        const testPromises = tests.map(test => framework.executeTest(persistenceService, test));
-        Promise.all(testPromises).then(results => console.log(results));
     })
 ;

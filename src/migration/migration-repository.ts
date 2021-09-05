@@ -1,5 +1,6 @@
+import { IPersistenceClient } from '../persistence/persistence-client.interface';
 import { IPersistenceService } from '../persistence/persistence-service.interface';
-import { IMigration, IMigrationItem, IMigrationItemStatus, IMigrationItemType } from './migration.interface';
+import { IMigration, IMigrationItem, IMigrationItemStatus } from './migration.interface';
 
 export class MigrationRepository {
 
@@ -12,10 +13,10 @@ export class MigrationRepository {
     //------------------------------
     // Public methods
     //------------------------------
-    public saveMultipleMigrationMetadata(migrations: IMigration[]): Promise<boolean> {
+    public saveMultipleMigrationMetadata(migrations: IMigration[]): Promise<void> {
         return Promise
             .all(migrations.map(migration => this.saveSingleMigrationMetadata(migration)))
-            .then(results => true)
+            .then(() => {})
         ;
     }
 
@@ -37,10 +38,6 @@ export class MigrationRepository {
                     await this.insertRollback(migration.id, migration.rollback.hash, migration.rollback.status, transact);
                 }
 
-                // } else if (entry?.change?.status !== migration.change?.status) {
-                //     // update status and executed as part of insert?
-                // }
-
             } catch (e) {
                 return this.persistenceService
                     .endTransaction(client, true)
@@ -52,6 +49,24 @@ export class MigrationRepository {
                 .then(() => true)
             ;
         });
+    }
+
+    public updateChangeMetadata(
+        client: IPersistenceClient,
+        change: IMigrationItem<"CHANGE">,
+        success: boolean,
+    ): Promise<void> {
+        // TODO
+        return Promise.resolve();
+    }
+
+    public updateRollbackMetadata(
+        client: IPersistenceClient,
+        change: IMigrationItem<"ROLLBACK">,
+        success: boolean,
+    ): Promise<void> {
+        // TODO
+        return Promise.resolve();
     }
 
     //------------------------------

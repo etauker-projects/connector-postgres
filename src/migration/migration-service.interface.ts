@@ -1,5 +1,6 @@
 export interface IMigrationService {
-    setup(): Promise<boolean>;
-    clear(): Promise<boolean>;
-    executeMigrationFile(fullPath: string): Promise<number>;
+    setup(): Promise<void>;
+    clear(): Promise<void>;
+    executeChange(migrationPath: string): Promise<void>;
+    executeRollback(migrationPath: string): Promise<void>;
 }
