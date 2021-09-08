@@ -1,5 +1,5 @@
 export interface IPersistenceResult<T> {
-    created: number;
+    inserted: number;
     updated: number;
     deleted: number;
     results: T[];

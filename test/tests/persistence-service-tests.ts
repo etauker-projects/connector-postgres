@@ -8,7 +8,7 @@ const tests = [
         run: async (service: IPersistenceService) => {
             const query = SELECT_QUERY;
             const result = await service.query(query);
-            assert.equal(result.created, 0, 'incorrect created');
+            assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
             assert.equal(result.results.length, 0, 'incorrect result count');
@@ -22,7 +22,7 @@ const tests = [
         run: async (service: IPersistenceService) => {
             const query = INSERT_QUERY;
             const result = await service.query(query);
-            assert.equal(result.created, 1, 'incorrect created');
+            assert.equal(result.inserted, 1, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
             assert.equal(result.results.length, 0, 'incorrect result count');
@@ -35,7 +35,7 @@ const tests = [
         run: async (service: IPersistenceService) => {
             const query = SELECT_QUERY;
             const result = await service.query(query);
-            assert.equal(result.created, 0, 'incorrect created');
+            assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
             assert.equal(result.results.length, 1, 'incorrect result count');
@@ -63,7 +63,7 @@ const tests = [
         run: async (service: IPersistenceService) => {
             const query = SELECT_QUERY;
             const result = await service.query(query);
-            assert.equal(result.created, 0, 'incorrect created');
+            assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
             assert.equal(result.results.length, 1, 'incorrect result count');
@@ -77,7 +77,7 @@ const tests = [
         run: async (service: IPersistenceService) => {
             const query = UPDATE_QUERY;
             const result = await service.query(query);
-            assert.equal(result.created, 0, 'incorrect created');
+            assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 1, 'incorrect updated');
             assert.equal(result.results.length, 0, 'incorrect result count');
@@ -90,7 +90,7 @@ const tests = [
         run: async (service: IPersistenceService) => {
             const query = SELECT_QUERY;
             const result = await service.query(query);
-            assert.equal(result.created, 0, 'incorrect created');
+            assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
             assert.equal(result.results.length, 1, 'incorrect result count');
@@ -104,7 +104,7 @@ const tests = [
         run: async (service: IPersistenceService) => {
             const query = DELETE_QUERY;
             const result = await service.query(query);
-            assert.equal(result.created, 0, 'incorrect created');
+            assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 1, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
             assert.equal(result.results.length, 0, 'incorrect result count');
@@ -117,7 +117,7 @@ const tests = [
         run: async (service: IPersistenceService) => {
             const query = SELECT_QUERY;
             const result = await service.query(query);
-            assert.equal(result.created, 0, 'incorrect created');
+            assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
             assert.equal(result.results.length, 0, 'incorrect result count');
@@ -145,7 +145,7 @@ const tests = [
         run: async (service: IPersistenceService) => {
             const query = SELECT_QUERY;
             const result = await service.query(query);
-            assert.equal(result.created, 0, 'incorrect created');
+            assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
             assert.equal(result.results.length, 0, 'incorrect result count');

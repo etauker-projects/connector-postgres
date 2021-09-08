@@ -39,7 +39,7 @@ export class PersistenceService implements IPersistenceService {
                     return response.reduce((aggregate, item) => {
                         const mapped = PersistenceService.mapResults<T>(item);
                         return {
-                            created: aggregate.created + mapped.created,
+                            inserted: aggregate.inserted + mapped.inserted,
                             updated: aggregate.updated + mapped.updated,
                             deleted: aggregate.deleted + mapped.deleted,
                             results: [...aggregate.results, ...mapped.results],
@@ -103,7 +103,7 @@ export class PersistenceService implements IPersistenceService {
 
     private static mapDataResult<T>(input: pg.QueryResult<T>): IPersistenceResult<T> {
         return {
-            created: input.command === 'INSERT' ? input.rowCount : 0,
+            inserted: input.command === 'INSERT' ? input.rowCount : 0,
             updated: input.command === 'UPDATE' ? input.rowCount : 0,
             deleted: input.command === 'DELETE' ? input.rowCount : 0,
             results: input.command === 'SELECT' && input.rows || [],
@@ -112,7 +112,7 @@ export class PersistenceService implements IPersistenceService {
 
     private static getDefaultResult<T>(): IPersistenceResult<T> {
         return {
-            created: 0,
+            inserted: 0,
             updated: 0,
             deleted: 0,
             results: [],
