@@ -51,6 +51,23 @@ export class IntegrationTestFramework {
         const path = pathModule.resolve(testFilePath, 'persistence-service-tests.ts');
         return import(path).then((mod: IIntegrationTestModule) => mod.tests);
     }
+
+    public runSequentialTests(persistenceService: IPersistenceService, tests: IIntegrationTest[]): Promise<IIntegrationTestSummary[]> {
+        const results: IIntegrationTestSummary[] = [];
+        const run = (prom: Promise<void>, i: number): Promise<void> => {
+            if (i >= tests.length) {
+                return prom;
+            }
+            return this
+                .executeTest(persistenceService, tests[i])
+                .then(summary => {
+                    results.push(summary);
+                    return run(Promise.resolve(), i+1);
+                });
+        }
+        return run(Promise.resolve(), 0)
+            .then(() => results.filter(res => res));
+    }
     
     public executeTest(
         persistenceService: IPersistenceService,

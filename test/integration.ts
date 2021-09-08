@@ -24,17 +24,14 @@ framework.loadTestConfig(configPath)
 
     .then(() => new MigrationService(testConfig.migrationConfig, persistenceService))
     .then(service => migrationService = service)
-    .then(() => migrationService.clear())
+    // .then(() => migrationService.clear())
     .then(() => migrationService.setup())
 
     .then(() => framework.testConnection(persistenceService, migrationService))
     .then(() => framework.runMigrationChanges(migrationService, testMigrationPath))
     
     .then(() => framework.loadTests(testFileRoot))
-    .then(tests => {
-        const testPromises = tests.map(test => framework.executeTest(persistenceService, test));
-        return Promise.all(testPromises);
-    })
+    .then(tests => framework.runSequentialTests(persistenceService, tests))
     .then(() => framework.runMigrationRollbacks(migrationService, testMigrationPath))
     .then(() => process.exit(0))
     .catch((err) => {
