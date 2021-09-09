@@ -35,6 +35,16 @@ export class MigrationService implements IMigrationService {
             .loadMultipleMigrationMetadata(this.internalMigrationRoot)
             .then(meta => metadata = meta)
             .then(() => this.executeSequentialMigrations(metadata))
+            .then(() => {
+
+                // migrations already executed, set status to success
+                metadata = metadata.map(meta => {
+                    const rollback: IRollback = { ...meta.rollback, status: 'SUCCESS' };
+                    const change: IChange = { ...meta.change, status: 'SUCCESS' };
+                    return { ...meta, rollback, change };
+                })
+
+            })
             .then(() => this.migrationRepository.saveMultipleMigrationMetadata(metadata))
         ;
     }
