@@ -1,4 +1,5 @@
 import assert from 'assert';
+import * as fs from 'fs/promises';
 import * as pathModule from 'path';
 import { IIntegrationTest } from './integration-test.interface';
 import { IPersistenceService } from '../src/persistence/persistence-service.interface';
@@ -45,11 +46,26 @@ export class IntegrationTestFramework {
         return migrationService.executeRollback(path);
     }
 
-    // Test file must export IIntegrationTestModule object
+    /**
+     * Iterate through the provided directory and load all files that don't begin with '_'.
+     * The object that is imported is expected to be an IIntegrationTestModule object.
+     */
     public loadTests(testFilePath: string): Promise<IIntegrationTest[]> {
-        // TODO: recursively iterate over files under rootPath
-        const path = pathModule.resolve(testFilePath, 'persistence-service-tests.ts');
-        return import(path).then((mod: IIntegrationTestModule) => mod.tests);
+        return fs.readdir(testFilePath, { encoding: 'utf8' })
+            .then(files => {
+                const prom = files
+                    .filter(file => !file.startsWith('_'))
+                    .map(file => pathModule.resolve(testFilePath, file))
+                    .map(fullpath => import(fullpath))
+                    .map(promise => promise.then(mod => mod as IIntegrationTestModule))
+                ;
+                return Promise.all(prom);
+            })
+            .then(mods => {
+                const results: IIntegrationTest[] = [];
+                return mods
+                    .reduce((combined, mod) => [...combined, ...mod.tests], results)
+            })
     }
 
     public runSequentialTests(persistenceService: IPersistenceService, tests: IIntegrationTest[]): Promise<IIntegrationTestSummary[]> {
