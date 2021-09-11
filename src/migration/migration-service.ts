@@ -25,7 +25,7 @@ export class MigrationService implements IMigrationService {
     }
 
     /**
-     * Executes migration instantiation logic.
+     * Create migration tables.
      */
     public setup(): Promise<void> {
         let metadata: IMigration[];
@@ -34,9 +34,7 @@ export class MigrationService implements IMigrationService {
         return MigrationLoader
             .loadMultipleMigrationMetadata(this.internalMigrationRoot)
             .then(meta => metadata = meta)
-
-            // TODO: do this in single transaction
-            .then(() => this.executeSequentialChanges(metadata))
+            .then(() => this.executeSequentialChanges(metadata, false, false))
             .then(() => {
 
                 // migrations already executed, set status to success
@@ -51,7 +49,6 @@ export class MigrationService implements IMigrationService {
     }
 
     /**
-     * Rollback all executed migrations and delete all migration tables.
      * Delete all migration tables.
      */
     public clear(): Promise<void> {
@@ -61,69 +58,109 @@ export class MigrationService implements IMigrationService {
         return MigrationLoader
             .loadMultipleMigrationMetadata(this.internalMigrationRoot)
             .then(meta => metadata = meta.reverse())
-
-            // TODO: do this in single transaction
-            .then(() => this.executeSequentialRollbacks(metadata))
+            .then(() => this.executeSequentialRollbacks(metadata, false, false))
         ;
     }
 
     /**
-     * Load the metadata for the provided directory and
-     * execute the migration change file.
+     * Load the metadata for all migrations inside the provided directory and execute the migration change file.
+     * Also save the migrations inside the migration table with the appropriate change statuses.
      */
-    public executeChange(migrationPath: string): Promise<void> {
-        let client: IPersistenceClient;
-        let migration: IMigration;
+    public loadAndExecuteChanges(migrationRootPath: string): Promise<void> {
+        return MigrationLoader
+            .loadMultipleMigrationMetadata(migrationRootPath)
+            .then(migrations => this.executeSequentialChanges(migrations))
+            .then(() => {})
+        ;
+    }
 
+    /**
+     * Load the metadata for all migrations inside the provided directory and execute the migration rollback file.
+     * Also save the migrations inside the migration table with the appropriate rollback statuses.
+     */
+     public loadAndExecuteRollbacks(migrationRootPath: string): Promise<void> {
+        return MigrationLoader
+            .loadMultipleMigrationMetadata(migrationRootPath)
+            .then(migrations => this.executeSequentialRollbacks(migrations))
+            .then(() => {})
+        ;
+    }
+
+    /**
+     * Load the metadata for the provided directory and execute the migration change file.
+     * Also save the migration inside the migration table with the appropriate change status.
+     */
+     public loadAndExecuteChange(migrationPath: string): Promise<void> {
         return MigrationLoader
             .loadSingleMigrationMetadata(migrationPath)
-            .then(m => migration = m)
-            .then(() => this.migrationRepository.saveSingleMetadataInNewTransaction(migration))
+            .then(migration => this.executeChange(migration))
+        ;
+    }
+
+    /**
+     * Load the metadata for the provided directory and execute the migration rollback file.
+     * Also save the migration inside the migration table with the appropriate rollback status.
+     */
+    public loadAndExecuteRollback(migrationPath: string): Promise<void> {
+        return MigrationLoader
+            .loadSingleMigrationMetadata(migrationPath)
+            .then(migration => this.executeRollback(migration))
+        ;
+    }
+
+    /**
+     * Execute the change of the provided migration and update
+     * the status of the change inside the migration database table.
+     */
+    public executeChange(migration: IMigration, updateStatus = true, saveMetadata = true): Promise<void> {
+        let client: IPersistenceClient;
+
+        return (saveMetadata ? this.migrationRepository.saveSingleMetadataInNewTransaction(migration): Promise.resolve())
             .then(() => this.persistenceService.startTransaction())
             .then(c => client = c)
             .then(() => this.persistenceService.continueTransaction(client, migration?.change?.script))
-            .then(() => this.migrationRepository.getMigrationIdByName(client, migration?.name))
-            .then(id => this.migrationRepository.updateChangeStatus(client, id, true))
+            .then(() => saveMetadata && updateStatus ? this.migrationRepository.getMigrationIdByName(client, migration?.name) : Promise.resolve(''))
+            .then(id => saveMetadata && updateStatus ? this.migrationRepository.updateChangeStatus(client, id, true) : Promise.resolve())
             .then(() => this.persistenceService.endTransaction(client, true))
             .then(() => this.debug(`${migration.name}: change successful`))
             .then(() => {})
             .catch(error => {
-                return this.migrationRepository.getMigrationIdByName(client, migration?.name)
-                    .then(id => this.migrationRepository.updateChangeStatus(client, id, false))
-                    .then(() => this.persistenceService.endTransaction(client, false))
-                    .then(() => this.debug(`${migration.name}: change failed`))
-                    .then(() => Promise.reject(error))
+                return client
+                    ? (saveMetadata && updateStatus ? this.migrationRepository.getMigrationIdByName(client, migration?.name) : Promise.resolve(''))
+                        .then(id => saveMetadata && updateStatus ? this.migrationRepository.updateChangeStatus(client, id, false) : Promise.resolve())
+                        .then(() => this.persistenceService.endTransaction(client, false))
+                        .then(() => this.debug(`${migration.name}: change failed`))
+                        .then(() => Promise.reject(error))
+                    : Promise.reject(error)
                 ;
             })
         ;
     }
 
     /**
-     * Load the metadata for the provided directory and
-     * execute the migration rollback file.
+     * Execute the rollback of the provided migration and update
+     * the status of the rollback inside the migration database table.
      */
-    public executeRollback(migrationPath: string): Promise<void> {
+    public executeRollback(migration: IMigration, updateStatus = true, saveMetadata = true): Promise<void> {
         let client: IPersistenceClient;
-        let migration: IMigration;
 
-        return MigrationLoader
-            .loadSingleMigrationMetadata(migrationPath)
-            .then(m => migration = m)
-            .then(() => this.migrationRepository.saveSingleMetadataInNewTransaction(migration))
+        return (saveMetadata ? this.migrationRepository.saveSingleMetadataInNewTransaction(migration): Promise.resolve())
             .then(() => this.persistenceService.startTransaction())
             .then(c => client = c)
             .then(() => this.persistenceService.continueTransaction(client, migration?.rollback?.script))
-            .then(() => this.migrationRepository.getMigrationIdByName(client, migration?.name))
-            .then(id => this.migrationRepository.updateRollbackStatus(client, id, true))
+            .then(() => saveMetadata && updateStatus ? this.migrationRepository.getMigrationIdByName(client, migration?.name): Promise.resolve(''))
+            .then(id => saveMetadata && updateStatus ? this.migrationRepository.updateRollbackStatus(client, id, true) : Promise.resolve())
             .then(() => this.persistenceService.endTransaction(client, true))
             .then(() => this.debug(`${migration.name}: rollback successful`))
             .then(() => {})
             .catch(error => {
-                return this.migrationRepository.getMigrationIdByName(client, migration?.name)
-                    .then(id => this.migrationRepository.updateRollbackStatus(client, id, false))
-                    .then(() => this.persistenceService.endTransaction(client, false))
-                    .then(() => this.debug(`${migration.name}: rollback failed`))
-                    .then(() => Promise.reject(error))
+                return client
+                    ? (saveMetadata && updateStatus ? this.migrationRepository.getMigrationIdByName(client, migration?.name): Promise.resolve(''))
+                        .then(id => saveMetadata && updateStatus ? this.migrationRepository.updateRollbackStatus(client, id, false) : Promise.resolve())
+                        .then(() => this.persistenceService.endTransaction(client, false))
+                        .then(() => this.debug(`${migration.name}: rollback failed`))
+                        .then(() => Promise.reject(error))
+                    : Promise.reject(error)
                 ;
             })
         ;
@@ -132,8 +169,9 @@ export class MigrationService implements IMigrationService {
     /**
      * Execute multiple database changes in sequence.
      * If any of the changes fail, the following changes will not be executed.
+     * Also updates the status of the changes inside the migration table.
      */
-    private executeSequentialChanges(migrations: IMigration[]): Promise<void> {
+    public executeSequentialChanges(migrations: IMigration[], updateStatus = true, saveMetadata = true): Promise<void> {
 
         const queueMigration = (previous: Promise<void>, i: number): Promise<void> => {
             if (i >= migrations.length) {
@@ -145,11 +183,8 @@ export class MigrationService implements IMigrationService {
             this.debug('');
             this.debug(`${migrations[i].name}: applying change`);
             return previous
-                .then(() => this.executeMigrationScript(migrations[i]?.change?.script))
-                .then(() => {
-                    this.debug(`${migrations[i].name}: change applied successfully`);
-                    return queueMigration(Promise.resolve(), i + 1);
-                })
+                .then(() => this.executeChange(migrations[i], updateStatus, saveMetadata))
+                .then(() => queueMigration(Promise.resolve(), i + 1))
             ;
         }
 
@@ -159,8 +194,9 @@ export class MigrationService implements IMigrationService {
     /**
      * Execute multiple database rollbacks in sequence.
      * If any of the rollbacks fail, the following rollbacks will not be executed.
+     * Also updates the status of the rollbacks inside the migration table.
      */
-    private executeSequentialRollbacks(migrations: IMigration[]): Promise<void> {
+    public executeSequentialRollbacks(migrations: IMigration[], updateStatus = true, saveMetadata = true): Promise<void> {
 
         const queueMigration = (previous: Promise<void>, i: number): Promise<void> => {
             if (i >= migrations.length) {
@@ -172,51 +208,12 @@ export class MigrationService implements IMigrationService {
             this.debug('');
             this.debug(`${migrations[i].name}: rolling back migration`);
             return previous
-                .then(() => this.executeMigrationScript(migrations[i]?.rollback?.script))
-                .then(() => {
-                    this.debug(`${migrations[i].name}: rolled back successfully`);
-                    return queueMigration(Promise.resolve(), i + 1);
-                })
+                .then(() => this.executeRollback(migrations[i], updateStatus, saveMetadata))
+                .then(() => queueMigration(Promise.resolve(), i + 1))
             ;
         }
 
         return queueMigration(Promise.resolve(), 0);
-    }
-
-    /**
-     * Attempt to execute the change file of a migration.
-     * If the change file execution fails, execute the rollback file.
-     * Returns false if the change file fails to execute (whether the rollback succeeds or not).
-     */
-    private executeSingleMigration(migration: IMigration): Promise<boolean> {
-        let client: IPersistenceClient;
-
-        this.debug(`${migration.name}: running migration`);
-        return this.persistenceService.startTransaction()
-            .then(c => client = c)
-            .then(() => this.persistenceService.continueTransaction(client, migration?.change?.script))
-            .then(() => this.persistenceService.endTransaction(client, true))
-            .then(() => this.debug(`${migration.name}: change successful`))
-            .then(() => true)
-            .catch(e => {
-
-                this.debug(`${migration.name}: change failed:`, e.message);
-                    return !client 
-                        ? Promise.reject(e)
-                        : this.executeMigrationScript(migration.rollback.script)
-                        .then(() => this.persistenceService.continueTransaction(client, migration?.change?.script))
-                            .then(() => this.persistenceService.endTransaction(client, false))
-                            .then(() => Promise.reject(e))
-                    ;
-            })
-        ;
-    }
-
-    /**
-     * Execute the provided migration (change or rollback) script and return the number of executed statements.
-     */
-    private executeMigrationScript(script: string): Promise<number> {
-        return this.persistenceService.updateInNewTransaction(script, []);
     }
 
     /**

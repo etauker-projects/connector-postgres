@@ -11,7 +11,7 @@ import { IMigrationService } from '../src/migration/migration-service.interface'
 
 export class IntegrationTestFramework {
 
-    public testConnection(persistenceService: IPersistenceService, migrationService: IMigrationService): Promise<boolean> {
+    public testConnection(persistenceService: IPersistenceService): Promise<boolean> {
         return this.getPostgresVersion(persistenceService)
             .then(version => {
                 console.log('');
@@ -39,11 +39,11 @@ export class IntegrationTestFramework {
     }
 
     public runMigrationChanges(migrationService: IMigrationService, path: string): Promise<void> {
-        return migrationService.executeChange(path);
+        return migrationService.loadAndExecuteChange(path);
     }
 
     public runMigrationRollbacks(migrationService: IMigrationService, path: string): Promise<void> {
-        return migrationService.executeRollback(path);
+        return migrationService.loadAndExecuteRollback(path);
     }
 
     /**
