@@ -1,4 +1,5 @@
 import { IPersistenceClient } from '../persistence/persistence-client.interface';
+import { IPersistenceResult } from '../persistence/persistence-results.interface';
 import { IPersistenceService } from '../persistence/persistence-service.interface';
 import { IMigration, IMigrationItem, IMigrationItemStatus } from './migration.interface';
 
@@ -13,76 +14,93 @@ export class MigrationRepository {
     //------------------------------
     // Public methods
     //------------------------------
-    public saveMultipleMigrationMetadata(migrations: IMigration[]): Promise<void> {
-        return Promise
-            .all(migrations.map(migration => this.saveSingleMigrationMetadata(migration)))
-            .then(() => {})
+    public saveMultipleMetadataInNewTransaction(migrations: IMigration[]): Promise<void> {
+        return this.persistenceService.startTransaction().then(async client => {
+            try {
+                const promises = migrations.map(migration => this.saveSingleMetadata(client, migration));
+                await Promise.all(promises);
+                await this.persistenceService.endTransaction(client, true);
+                return Promise.resolve();
+            } catch (e) {
+                await this.persistenceService.endTransaction(client, false);
+                return Promise.reject(e);
+            }
+        });
+        
         ;
     }
 
-    public saveSingleMigrationMetadata(migration: IMigration): Promise<boolean> {
-
+    public saveSingleMetadataInNewTransaction(migration: IMigration): Promise<void> {
         return this.persistenceService.startTransaction().then(async client => {
-            const transact = this.persistenceService.continueTransaction.bind(this, client);
-
             try {
-                const query = `SELECT * FROM public.migration WHERE name = '${migration.name}';`;
-                const saved = (await transact(query)).results[0] as IMigration;
-
-                if (saved) {
-                    await this.verifyChangeIntegrity(saved, migration, transact);
-                    await this.verifyRollbackIntegrity(saved, migration, transact);
-                } else {
-                    await this.insertMigration(migration.id, migration.name, transact);
-                    await this.insertChange(migration.id, migration.change.hash, migration.change.status, transact);
-                    await this.insertRollback(migration.id, migration.rollback.hash, migration.rollback.status, transact);
-                }
-
+                await this.saveSingleMetadata(client, migration);
+                await this.persistenceService.endTransaction(client, true);
+                return Promise.resolve();
             } catch (e) {
-                return this.persistenceService
-                    .endTransaction(client, true)
-                    .then(() => Promise.reject(e))
-                ;
+                await this.persistenceService.endTransaction(client, false);
+                return Promise.reject(e);
             }
-            return this.persistenceService
-                .endTransaction(client, true)
-                .then(() => true)
-            ;
         });
     }
 
-    public updateChangeMetadata(
-        client: IPersistenceClient,
-        change: IMigrationItem<"CHANGE">,
-        success: boolean,
-    ): Promise<void> {
-        // TODO
-        return Promise.resolve();
+    public getMigrationIdByName(client: IPersistenceClient, migrationName: string): Promise<string> {
+        const transact = this.persistenceService.continueTransaction.bind(this, client);
+        const query = `SELECT id FROM public.migration WHERE name = '${ migrationName }';`;
+        return transact(query).then(res => {
+            return (res as IPersistenceResult<{ id: string }>).results[0].id;
+        })
     }
 
-    public updateRollbackMetadata(
-        client: IPersistenceClient,
-        change: IMigrationItem<"ROLLBACK">,
-        success: boolean,
-    ): Promise<void> {
-        // TODO
-        return Promise.resolve();
+    public async saveSingleMetadata(client: IPersistenceClient, migration: IMigration): Promise<void> {
+        const transact = this.persistenceService.continueTransaction.bind(this, client);
+
+        try {
+            const query = `SELECT * FROM public.migration WHERE name = '${migration.name}';`;
+            const saved = (await transact(query)).results[0] as IMigration;
+
+            if (saved) {
+                await this.verifyChangeIntegrity(saved, migration, transact);
+                await this.verifyRollbackIntegrity(saved, migration, transact);
+            } else {
+                await this.insertMigration(migration.id, migration.name, transact);
+                await this.insertChange(migration.id, migration.change.hash, migration.change.status, transact);
+                await this.insertRollback(migration.id, migration.rollback.hash, migration.rollback.status, transact);
+                return Promise.resolve();
+            }
+
+        } catch (e) {
+            return Promise.reject(e);
+        }
+    }
+
+    public updateChangeStatus(client: IPersistenceClient, migrationId: string, success: boolean): Promise<void> {
+        const transact = this.persistenceService.continueTransaction.bind(this, client);
+        const status: IMigrationItemStatus = success ? 'SUCCESS' : 'FAILURE';
+        const query = `UPDATE public.change SET status = '${ status }', executed_at = now() WHERE migration_id = '${ migrationId }';`;
+        return transact(query).then();
+    }
+
+    public updateRollbackStatus(client: IPersistenceClient, migrationId: string, success: boolean): Promise<void> {
+        const transact = this.persistenceService.continueTransaction.bind(this, client);
+        const status: IMigrationItemStatus = success ? 'SUCCESS' : 'FAILURE';
+        const query = `UPDATE public.rollback SET status = '${ status }', executed_at = now() WHERE migration_id = '${ migrationId }';`;
+        return transact(query).then();
     }
 
     //------------------------------
     // Private methods
     //------------------------------
-    private async insertMigration(id: string, name: string, transact: Function) {
+    private insertMigration(id: string, name: string, transact: Function) {
         const query = `INSERT INTO public.migration (id, name) VALUES ('${id}', '${name}');`;
         return transact(query);
     }
 
-    private async insertChange(id: string, hash: string, status: IMigrationItemStatus, transact: Function) {
+    private insertChange(id: string, hash: string, status: IMigrationItemStatus, transact: Function) {
         const query = `INSERT INTO public.change (migration_id, hash, status) VALUES ('${id}', '${hash}', '${status}');`;
         return transact(query);
     }
 
-    private async insertRollback(id: string, hash: string, status: IMigrationItemStatus, transact: Function) {
+    private insertRollback(id: string, hash: string, status: IMigrationItemStatus, transact: Function) {
         const query = `INSERT INTO public.rollback (migration_id, hash, status) VALUES ('${id}', '${hash}', '${status}');`;
         return transact(query);
     }

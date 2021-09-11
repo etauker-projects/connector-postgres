@@ -45,6 +45,9 @@ export class MigrationLoader {
         });
     }
 
+    //------------------------------
+    // Private methods
+    //------------------------------
     private static loadChangeMetadata(path: string, migrationId: string): Promise<IChange> {
         return fs
             .readFile(path, { encoding: 'utf-8' })

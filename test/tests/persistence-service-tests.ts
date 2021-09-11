@@ -7,7 +7,7 @@ const tests = [
         name: 'select should return correct results',
         run: async (service: IPersistenceService) => {
             const query = SELECT_QUERY;
-            const result = await service.query(query);
+            const result = await service.queryInNewTransaction(query);
             assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
@@ -21,7 +21,7 @@ const tests = [
         name: 'insert should return correct row count',
         run: async (service: IPersistenceService) => {
             const query = INSERT_QUERY;
-            const result = await service.query(query);
+            const result = await service.queryInNewTransaction(query);
             assert.equal(result.inserted, 1, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
@@ -34,7 +34,7 @@ const tests = [
         name: 'select should return correct results after insert',
         run: async (service: IPersistenceService) => {
             const query = SELECT_QUERY;
-            const result = await service.query(query);
+            const result = await service.queryInNewTransaction(query);
             assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
@@ -48,7 +48,7 @@ const tests = [
         name: 'insert should fail when unique column is not unique',
         run: async (service: IPersistenceService) => {
             try {
-                await service.query(INSERT_NOT_UNIQUE_QUERY);
+                await service.queryInNewTransaction(INSERT_NOT_UNIQUE_QUERY);
                 return { success: false, message: 'Error should have been thrown due to non-unique value' };
             } catch (error) {
                 const expected = 'violates unique constraint';
@@ -62,7 +62,7 @@ const tests = [
         name: 'select should return correct results after insert of not unique value',
         run: async (service: IPersistenceService) => {
             const query = SELECT_QUERY;
-            const result = await service.query(query);
+            const result = await service.queryInNewTransaction(query);
             assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
@@ -76,7 +76,7 @@ const tests = [
         name: 'update should return correct row count',
         run: async (service: IPersistenceService) => {
             const query = UPDATE_QUERY;
-            const result = await service.query(query);
+            const result = await service.queryInNewTransaction(query);
             assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 1, 'incorrect updated');
@@ -89,7 +89,7 @@ const tests = [
         name: 'select should return correct results after update',
         run: async (service: IPersistenceService) => {
             const query = SELECT_QUERY;
-            const result = await service.query(query);
+            const result = await service.queryInNewTransaction(query);
             assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
@@ -103,7 +103,7 @@ const tests = [
         name: 'delete should return correct row count',
         run: async (service: IPersistenceService) => {
             const query = DELETE_QUERY;
-            const result = await service.query(query);
+            const result = await service.queryInNewTransaction(query);
             assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 1, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
@@ -116,7 +116,7 @@ const tests = [
         name: 'select should return correct results after delete',
         run: async (service: IPersistenceService) => {
             const query = SELECT_QUERY;
-            const result = await service.query(query);
+            const result = await service.queryInNewTransaction(query);
             assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');
@@ -130,7 +130,7 @@ const tests = [
         name: 'insert should fail when not_null column is null',
         run: async (service: IPersistenceService) => {
             try {
-                await service.query(INSERT_NULL_QUERY);
+                await service.queryInNewTransaction(INSERT_NULL_QUERY);
                 return { success: false, message: 'Error should have been thrown due to null value' };
             } catch (error) {
                 const expected = 'violates not-null constraint';
@@ -144,7 +144,7 @@ const tests = [
         name: 'select should return correct results after null insert',
         run: async (service: IPersistenceService) => {
             const query = SELECT_QUERY;
-            const result = await service.query(query);
+            const result = await service.queryInNewTransaction(query);
             assert.equal(result.inserted, 0, 'incorrect inserted');
             assert.equal(result.deleted, 0, 'incorrect deleted');
             assert.equal(result.updated, 0, 'incorrect updated');

@@ -44,7 +44,7 @@ export class PersistenceService implements IPersistenceService {
                             deleted: aggregate.deleted + mapped.deleted,
                             results: [...aggregate.results, ...mapped.results],
                         }
-                    }, PersistenceService.getDefaultResult());
+                    }, PersistenceService.getDefaultResult<T>());
                 }
                 return PersistenceService.mapResults<T>(response);
             })
@@ -61,7 +61,7 @@ export class PersistenceService implements IPersistenceService {
         })
     }
 
-    public query<T>(sql: string, params: any[] = []): Promise<IPersistenceResult<T>> {
+    public queryInNewTransaction<T>(sql: string, params: any[] = []): Promise<IPersistenceResult<T>> {
         let client: IPersistenceClient;
         return this.startTransaction()
             .then(c => client = c)
@@ -70,7 +70,7 @@ export class PersistenceService implements IPersistenceService {
         ;
     }
 
-    public update<T>(sql: string, params?: any[]): Promise<any> {
+    public updateInNewTransaction<T>(sql: string, params?: any[]): Promise<any> {
         let client: IPersistenceClient;
         let count: number;
 
@@ -87,7 +87,7 @@ export class PersistenceService implements IPersistenceService {
         ;
     }
 
-    public static mapResults<T>(input: pg.QueryResult<T>): IPersistenceResult<T> {
+    private static mapResults<T>(input: pg.QueryResult<T>): IPersistenceResult<T> {
         const dataDefinitionCommand = [ 'CALL', 'DROP', 'CREATE' ];
         const dataDefinition = [ 'INSERT', 'UPDATE', 'DELETE', 'SELECT' ];
 

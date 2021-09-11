@@ -25,10 +25,10 @@ export interface IPersistenceService {
     /**
      * Execute 'INSERT', 'SELECT', 'UPDATE' and 'DELETE' statements.
      */
-    query<T>(sql: string, params?: any[]): Promise<IPersistenceResult<T>>;
+    queryInNewTransaction<T>(sql: string, params?: any[]): Promise<IPersistenceResult<T>>;
 
     /**
-     * Executes any any number of SQL statements and returns number of statements executed.
+     * Executes any number of SQL statements and returns number of statements executed.
      */ 
-    update(sql: string, params?: any[]): Promise<number>;
+    updateInNewTransaction(sql: string, params?: any[]): Promise<number>;
 }

@@ -24,7 +24,7 @@ framework.loadTestConfig(configPath)
 
     .then(() => new MigrationService(testConfig.migrationConfig, persistenceService))
     .then(service => migrationService = service)
-    // .then(() => migrationService.clear())
+    .then(() => migrationService.clear())
     .then(() => migrationService.setup())
 
     .then(() => framework.testConnection(persistenceService, migrationService))
