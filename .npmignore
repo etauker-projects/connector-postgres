@@ -1,0 +1,9 @@
+# Editor and other configurations
+**/wallaby.js
+
+# Test related files
+test/*
+**/*.spec.*
+
+# Generated files
+**/node_modules
