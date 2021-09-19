@@ -1,3 +1,4 @@
+import url from 'url';
 import path from 'path';
 import { PersistenceService } from '../src/persistence/persistence-service';
 import { IntegrationTestFramework } from './integration-test-framework';
@@ -11,7 +12,9 @@ let persistenceService: IPersistenceService;
 let migrationService: IMigrationService;
 
 const configPath = ''; // TODO get from parameters
-const rootPath = path.resolve(process.cwd(), 'test'); // TODO get from parameters
+const currentFilename = url.fileURLToPath(import.meta.url);
+const currentDirname = path.dirname(currentFilename);
+const rootPath = path.resolve(currentDirname); // TODO get from parameters
 const testFileRoot = path.resolve(rootPath, 'tests');
 const testMigrationPath = path.resolve(rootPath, 'migrations');
 const framework = new IntegrationTestFramework();

@@ -1,4 +1,6 @@
+import url from 'url';
 import path from 'path';
+
 import { IPersistenceService } from '../persistence/persistence-service.interface';
 import { IMigrationConfiguration } from './migration-configuration.interface';
 import { IMigrationService } from './migration-service.interface';
@@ -18,7 +20,9 @@ export class MigrationService implements IMigrationService {
         config: Partial<IMigrationConfiguration>,
         persistenceService: IPersistenceService,
     ) {
-        this.internalMigrationRoot = path.resolve('./migrations/internal');
+        const currentFilename = url.fileURLToPath(import.meta.url);
+        const currentDirname = path.dirname(currentFilename);
+        this.internalMigrationRoot = path.resolve(currentDirname, '..', '..', 'migrations', 'internal');
         this.config = { debug: false, ...config };
         this.persistenceService = persistenceService;
         this.migrationRepository = new MigrationRepository(persistenceService);
