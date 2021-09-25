@@ -50,7 +50,7 @@ const tests = [
             try {
                 await service.queryInNewTransaction(INSERT_NOT_UNIQUE_QUERY);
                 return { success: false, message: 'Error should have been thrown due to non-unique value' };
-            } catch (error) {
+            } catch (error: any) {
                 const expected = 'violates unique constraint';
                 assert.equal(error.message.includes(expected), true, `error message should contain '${expected}'`)
                 return { success: true, message: 'Success' };
@@ -132,7 +132,7 @@ const tests = [
             try {
                 await service.queryInNewTransaction(INSERT_NULL_QUERY);
                 return { success: false, message: 'Error should have been thrown due to null value' };
-            } catch (error) {
+            } catch (error: any) {
                 const expected = 'violates not-null constraint';
                 assert.equal(error.message.includes(expected), true, `error message should contain '${expected}'`)
                 return { success: true, message: 'Success' };
