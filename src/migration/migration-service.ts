@@ -128,14 +128,15 @@ export class MigrationService implements IMigrationService {
             .then(() => this.persistenceService.endTransaction(client, true))
             .then(() => this.debug(`${migration.name}: change successful`))
             .then(() => {})
-            .catch(error => {
+            .catch(error => {                
                 return client
-                    ? (saveMetadata ? this.migrationRepository.getMigrationIdByName(client, migration?.name) : Promise.resolve(''))
-                        .then(id => saveMetadata ? this.migrationRepository.updateChangeStatus(client, id, false) : Promise.resolve())
+                    ? (saveMetadata ? this.migrationRepository.getMigrationIdByName(client, migration?.name).catch(e => console.warn('The following error ocurred while handling another error (see original below): ' + e)) : Promise.resolve(''))
+                        .then(id => saveMetadata && id ? this.migrationRepository.updateChangeStatus(client, id, false).catch(e => console.warn('The following error ocurred while handling another error (see original below): ' + e)) : Promise.resolve())
                         .then(() => this.persistenceService.endTransaction(client, false))
                         .then(() => this.debug(`${migration.name}: change failed`))
+                        .catch(e => console.warn('The following error ocurred while handling another error (see original below): ' + e))
                         .then(() => Promise.reject(error))
-                    : Promise.reject(error)
+                        : Promise.reject(error)
                 ;
             })
         ;
