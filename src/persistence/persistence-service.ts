@@ -88,7 +88,7 @@ export class PersistenceService implements IPersistenceService {
     }
 
     private static mapResults<T>(input: pg.QueryResult<T>): IPersistenceResult<T> {
-        const dataDefinitionCommand = [ 'CALL', 'DROP', 'CREATE' ];
+        const dataDefinitionCommand = [ 'CALL', 'DROP', 'CREATE', 'ALTER' ];
         const dataDefinition = [ 'INSERT', 'UPDATE', 'DELETE', 'SELECT' ];
 
         if (dataDefinition.includes(input.command)) {
