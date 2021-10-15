@@ -15,7 +15,7 @@
     "postlint": "",
     "preinstall": "",
     "install": "",
-    "postinstall": "npm run build",
+    "postinstall": "",
     "prebuild": "npx rimraf dist",
     "build": "tsc --project ./config/tsconfig.json",
     "postbuild": "",
