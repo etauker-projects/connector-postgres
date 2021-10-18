@@ -63,8 +63,8 @@ export class MigrationRepository {
                 await this.verifyRollbackIntegrity(saved, migration, transact);
             } else {
                 await this.insertMigration(migration.id, migration.name, transact);
-                await this.insertChange(migration.id, migration.change.hash, migration.change.status, transact);
-                await this.insertRollback(migration.id, migration.rollback.hash, migration.rollback.status, transact);
+                await this.insertChange(migration.id, migration.change.hash, migration.change.status, transact, migration.change.executedAt);
+                await this.insertRollback(migration.id, migration.rollback.hash, migration.rollback.status, transact, migration.rollback.executedAt);
                 return Promise.resolve();
             }
 
@@ -97,13 +97,13 @@ export class MigrationRepository {
         return transact(query);
     }
 
-    private insertChange(id: string, hash: string, status: IMigrationItemStatus, transact: Function) {
-        const query = `INSERT INTO public.change (migration_id, hash, status) VALUES ('${id}', '${hash}', '${status}');`;
+    private insertChange(id: string, hash: string, status: IMigrationItemStatus, transact: Function, executedAt: string = 'null') {
+        const query = `INSERT INTO public.change (migration_id, hash, status, executed_at) VALUES ('${id}', '${hash}', '${status}', ${executedAt});`;
         return transact(query);
     }
 
-    private insertRollback(id: string, hash: string, status: IMigrationItemStatus, transact: Function) {
-        const query = `INSERT INTO public.rollback (migration_id, hash, status) VALUES ('${id}', '${hash}', '${status}');`;
+    private insertRollback(id: string, hash: string, status: IMigrationItemStatus, transact: Function, executedAt: string = 'null') {
+        const query = `INSERT INTO public.rollback (migration_id, hash, status, executed_at) VALUES ('${id}', '${hash}', '${status}', ${executedAt});`;
         return transact(query);
     }
 

@@ -43,7 +43,7 @@ export class MigrationService implements IMigrationService {
 
                 // migrations already executed, set status to success
                 metadata = metadata.map(meta => {
-                    const change: IChange = { ...meta.change, status: 'SUCCESS' };
+                    const change: IChange = { ...meta.change, status: 'SUCCESS', executedAt: 'now()' };
                     return { ...meta, change };
                 })
 
