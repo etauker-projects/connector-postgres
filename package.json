@@ -1,6 +1,6 @@
 {
   "name": "@etauker/connector-postgres",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Node postgres connector",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
