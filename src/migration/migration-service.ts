@@ -128,7 +128,7 @@ export class MigrationService implements IMigrationService {
             .then(() => this.persistenceService.endTransaction(client, true))
             .then(() => this.debug(`${migration.name}: change successful`))
             .then(() => {})
-            .catch(error => {                
+            .catch(error => {
                 return client
                     ? (saveMetadata ? this.migrationRepository.getMigrationIdByName(client, migration?.name).catch(e => console.warn('The following error ocurred while handling another error (see original below): ' + e)) : Promise.resolve(''))
                         .then(id => saveMetadata && id ? this.migrationRepository.updateChangeStatus(client, id, false).catch(e => console.warn('The following error ocurred while handling another error (see original below): ' + e)) : Promise.resolve())

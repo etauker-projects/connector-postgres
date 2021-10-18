@@ -76,14 +76,16 @@ export class MigrationRepository {
     public updateChangeStatus(client: IPersistenceClient, migrationId: string, success: boolean): Promise<void> {
         const transact = this.persistenceService.continueTransaction.bind(this, client);
         const status: IMigrationItemStatus = success ? 'SUCCESS' : 'FAILURE';
-        const query = `UPDATE public.change SET status = '${ status }', executed_at = now() WHERE migration_id = '${ migrationId }';`;
+        const executionTimestamp = success ? ', executed_at = now()' : '';
+        const query = `UPDATE public.change SET status = '${ status }'${ executionTimestamp } WHERE migration_id = '${ migrationId }';`;
         return transact(query).then();
     }
 
     public updateRollbackStatus(client: IPersistenceClient, migrationId: string, success: boolean): Promise<void> {
         const transact = this.persistenceService.continueTransaction.bind(this, client);
         const status: IMigrationItemStatus = success ? 'SUCCESS' : 'FAILURE';
-        const query = `UPDATE public.rollback SET status = '${ status }', executed_at = now() WHERE migration_id = '${ migrationId }';`;
+        const executionTimestamp = success ? ', executed_at = now()' : '';
+        const query = `UPDATE public.rollback SET status = '${ status }'${ executionTimestamp } WHERE migration_id = '${ migrationId }';`;
         return transact(query).then();
     }
 
