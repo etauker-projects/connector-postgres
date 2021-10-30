@@ -2,16 +2,16 @@ import assert from 'assert';
 import * as fs from 'fs/promises';
 import * as pathModule from 'path';
 import { IIntegrationTest } from './integration-test.interface';
-import { IPersistenceService } from '../src/persistence/persistence-service.interface';
 import { IIntegrationTestSummary } from './integration-test-summary.interface';
 import { IIntegrationTestConfiguration } from './integration-test-configuration.interface';
 import { IIntegrationTestModule } from './integration-test-module.interface';
-import { IMigrationService } from '../src/migration/migration-service.interface';
+import { PersistenceService } from '../src/persistence/persistence-service';
+import { MigrationService } from '../src/migration/migration-service';
 
 
 export class IntegrationTestFramework {
 
-    public testConnection(persistenceService: IPersistenceService): Promise<boolean> {
+    public testConnection(persistenceService: PersistenceService): Promise<boolean> {
         return this.getPostgresVersion(persistenceService)
             .then(version => {
                 console.log('');
@@ -31,18 +31,18 @@ export class IntegrationTestFramework {
         ;
     }
     
-    public getPostgresVersion(persistenceService: IPersistenceService): Promise<string> {
+    public getPostgresVersion(persistenceService: PersistenceService): Promise<string> {
         return persistenceService
-            .queryInNewTransaction<{ version: string }>('SELECT version();')
-            .then(res => res.results[0].version)
+            .query<{ version: string }>('SELECT version();')
+            .then(res => res[0].version)
         ;
     }
 
-    public runMigrationChanges(migrationService: IMigrationService, path: string): Promise<void> {
+    public runMigrationChanges(migrationService: MigrationService, path: string): Promise<void> {
         return migrationService.loadAndExecuteChange(path);
     }
 
-    public runMigrationRollbacks(migrationService: IMigrationService, path: string): Promise<void> {
+    public runMigrationRollbacks(migrationService: MigrationService, path: string): Promise<void> {
         return migrationService.loadAndExecuteRollback(path);
     }
 
@@ -68,7 +68,7 @@ export class IntegrationTestFramework {
             })
     }
 
-    public runSequentialTests(persistenceService: IPersistenceService, tests: IIntegrationTest[]): Promise<IIntegrationTestSummary[]> {
+    public runSequentialTests(persistenceService: PersistenceService, tests: IIntegrationTest[]): Promise<IIntegrationTestSummary[]> {
         const results: IIntegrationTestSummary[] = [];
         const run = (prom: Promise<void>, i: number): Promise<void> => {
             if (i >= tests.length) {
@@ -86,7 +86,7 @@ export class IntegrationTestFramework {
     }
     
     public executeTest(
-        persistenceService: IPersistenceService,
+        persistenceService: PersistenceService,
         test: IIntegrationTest
     ): Promise<IIntegrationTestSummary> {
         return test

@@ -2,14 +2,12 @@ import url from 'url';
 import path from 'path';
 import { PersistenceService } from '../src/persistence/persistence-service';
 import { IntegrationTestFramework } from './integration-test-framework';
-import { IPersistenceService } from '../src/persistence/persistence-service.interface';
 import { MigrationService } from '../src/migration/migration-service';
-import { IMigrationService } from '../src/migration/migration-service.interface';
 import { IIntegrationTestConfiguration } from './integration-test-configuration.interface';
 
 let testConfig: IIntegrationTestConfiguration;
-let persistenceService: IPersistenceService;
-let migrationService: IMigrationService;
+let persistenceService: PersistenceService;
+let migrationService: MigrationService;
 
 const configPath = ''; // TODO get from parameters
 const currentFilename = url.fileURLToPath(import.meta.url);
