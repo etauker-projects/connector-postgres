@@ -5,7 +5,6 @@ import { IMigrationConfiguration } from './migration-configuration.interface';
 import { IChange, IMigration } from './migration.interface';
 import { MigrationLoader } from './migration-loader';
 import { MigrationRepository } from './migration-repository';
-import { IPersistenceClient } from '../persistence/persistence-client.interface';
 import { PersistenceService } from '../persistence/persistence-service';
 
 export class MigrationService {
@@ -116,22 +115,20 @@ export class MigrationService {
      * the status of the change inside the migration database table.
      */
     public executeChange(migration: IMigration, saveMetadata = true): Promise<void> {
-        let client: IPersistenceClient;
+        const transaction = this.persistenceService.transact();
 
         return (saveMetadata ? this.migrationRepository.saveSingleMetadataInNewTransaction(migration): Promise.resolve())
-            .then(() => this.persistenceService.start())
-            .then(c => client = c)
-            .then(() => this.persistenceService.continue(client, migration?.change?.script))
-            .then(() => saveMetadata ? this.migrationRepository.getMigrationIdByName(client, migration?.name) : Promise.resolve(''))
-            .then(id => saveMetadata ? this.migrationRepository.updateChangeStatus(client, id, true) : Promise.resolve())
-            .then(() => this.persistenceService.end(client, true))
+            .then(() => transaction.continue(migration?.change?.script))
+            .then(() => saveMetadata ? this.migrationRepository.getMigrationIdByName(transaction, migration?.name) : Promise.resolve(''))
+            .then(id => saveMetadata ? this.migrationRepository.updateChangeStatus(transaction, id, true) : Promise.resolve())
+            .then(() => transaction.end(true))
             .then(() => this.debug(`${migration.name}: change successful`))
             .then(() => {})
             .catch(error => {
-                return client
-                    ? (saveMetadata ? this.migrationRepository.getMigrationIdByName(client, migration?.name).catch(e => console.warn('The following error ocurred while handling another error (see original below): ' + e)) : Promise.resolve(''))
-                        .then(id => saveMetadata && id ? this.migrationRepository.updateChangeStatus(client, id, false).catch(e => console.warn('The following error ocurred while handling another error (see original below): ' + e)) : Promise.resolve())
-                        .then(() => this.persistenceService.end(client, false))
+                return transaction
+                    ? (saveMetadata ? this.migrationRepository.getMigrationIdByName(transaction, migration?.name).catch(e => console.warn('The following error ocurred while handling another error (see original below): ' + e)) : Promise.resolve(''))
+                        .then(id => saveMetadata && id ? this.migrationRepository.updateChangeStatus(transaction, id, false).catch(e => console.warn('The following error ocurred while handling another error (see original below): ' + e)) : Promise.resolve())
+                        .then(() => transaction.end(false))
                         .then(() => this.debug(`${migration.name}: change failed`))
                         .catch(e => console.warn('The following error ocurred while handling another error (see original below): ' + e))
                         .then(() => Promise.reject(error))
@@ -146,22 +143,20 @@ export class MigrationService {
      * the status of the rollback inside the migration database table.
      */
     public executeRollback(migration: IMigration, saveMetadata = true): Promise<void> {
-        let client: IPersistenceClient;
+        const transaction = this.persistenceService.transact();
 
         return (saveMetadata ? this.migrationRepository.saveSingleMetadataInNewTransaction(migration): Promise.resolve())
-            .then(() => this.persistenceService.start())
-            .then(c => client = c)
-            .then(() => this.persistenceService.continue(client, migration?.rollback?.script))
-            .then(() => saveMetadata ? this.migrationRepository.getMigrationIdByName(client, migration?.name): Promise.resolve(''))
-            .then(id => saveMetadata ? this.migrationRepository.updateRollbackStatus(client, id, true) : Promise.resolve())
-            .then(() => this.persistenceService.end(client, true))
+            .then(() => transaction.continue(migration?.rollback?.script))
+            .then(() => saveMetadata ? this.migrationRepository.getMigrationIdByName(transaction, migration?.name): Promise.resolve(''))
+            .then(id => saveMetadata ? this.migrationRepository.updateRollbackStatus(transaction, id, true) : Promise.resolve())
+            .then(() => transaction.end(true))
             .then(() => this.debug(`${migration.name}: rollback successful`))
             .then(() => {})
             .catch(error => {
-                return client
-                    ? (saveMetadata ? this.migrationRepository.getMigrationIdByName(client, migration?.name): Promise.resolve(''))
-                        .then(id => saveMetadata ? this.migrationRepository.updateRollbackStatus(client, id, false) : Promise.resolve())
-                        .then(() => this.persistenceService.end(client, false))
+                return transaction
+                    ? (saveMetadata ? this.migrationRepository.getMigrationIdByName(transaction, migration?.name): Promise.resolve(''))
+                        .then(id => saveMetadata ? this.migrationRepository.updateRollbackStatus(transaction, id, false) : Promise.resolve())
+                        .then(() => transaction.end(false))
                         .then(() => this.debug(`${migration.name}: rollback failed`))
                         .then(() => Promise.reject(error))
                     : Promise.reject(error)

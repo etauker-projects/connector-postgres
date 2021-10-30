@@ -1,9 +1,8 @@
 import pg from 'pg';
 const { Pool } = pg;
 
-import { IPersistenceClient } from './persistence-client.interface';
 import { IPersistenceConfiguration } from './persistence-configuration.interface';
-import { IPersistenceResult } from './persistence-results.interface';
+import { PersistenceTransaction } from './persistence-transaction';
 import { IQueryConfig } from './query-configuration.interface';
 
 export class PersistenceService {
@@ -38,61 +37,17 @@ export class PersistenceService {
     //------------------------------
 
     /**
-     * Start a database transaction and return the client object.
+     * 
      */
-    public start(): Promise<IPersistenceClient> {
-        let client: IPersistenceClient;
-        return this.pool.connect()
-            .then(c => client = c)
-            .then(() => client.query('BEGIN'))
-            .then(() => client)
-        ;
-    }
-
-    /**
-     * Executes an SQL statement using the provided client.
-     * Does not close the connection to allow multiple database queries in a single transaction.
-     * Ensure to call 'end' method after all SQL statements are completed.
-     */
-    public continue<T>(client: IPersistenceClient, sql: string, params: any[] = []): Promise<IPersistenceResult<T>> {
-        return client
-            .query<T>(sql, params)
-            .then(response => {
-                if (Array.isArray(response)) {
-                    return response.reduce((aggregate, item) => {
-                        const mapped = PersistenceService.mapResults<T>(item);
-                        return {
-                            inserted: aggregate.inserted + mapped.inserted,
-                            updated: aggregate.updated + mapped.updated,
-                            deleted: aggregate.deleted + mapped.deleted,
-                            results: [...aggregate.results, ...mapped.results],
-                        }
-                    }, PersistenceService.getDefaultResult<T>());
-                }
-                return PersistenceService.mapResults<T>(response);
-            })
-        ;
-    }
-
-    /**
-     * Close a database connection for the provided client.
-     * If 'commit' parameter is true, commits the transactions, 
-     * otherwise rolls back all statements in this transaction.
-     */
-    public end(client: IPersistenceClient, commit: boolean): Promise<void> {
-        const command = commit ? 'COMMIT' : 'ROLLBACK';
-        return new Promise((resolve, reject) => {
-            client.query(command).catch(error => reject(error)).finally(() => {
-                client.release();
-                resolve();
-            });
-        })
+     public transact(): PersistenceTransaction {
+        return new PersistenceTransaction(this.pool.connect());
     }
 
     /**
      * Execute a 'SELECT' statement and return the list of results.
+     * Does not commit the transaction.
      */
-     public query<T>(sql: string, params: any[] = [], partialConfig?: Partial<IQueryConfig>): Promise<T[]> {
+     public query<T>(sql: string, params: any[] = [], partialConfig?: Partial<Omit<IQueryConfig, 'commit'>>): Promise<T[]> {
         const config: IQueryConfig = { ...this.config, ...partialConfig };
         const allowed = ['SELECT'];
         const statements = this.splitStatements(sql);
@@ -103,13 +58,17 @@ export class PersistenceService {
             throw new Error(`Query method can only be used for '${allowed.join("', '")}' statements`);
         }
 
-        let client: IPersistenceClient;
-        return this.start()
-            .then(c => client = c)
-            .then(() => this.continue<T>(client, sql, params))
-            .then(result => result.results)
-            .finally(() => this.end(client, false))
-        ;
+        return new Promise(async (resolve, reject) => {
+            const transaction = this.transact();
+            try {
+                const result = await transaction.continue<T>(sql, params);
+                await transaction.end(false);
+                resolve(result.results);
+            } catch (error) {
+                await transaction.end(false);
+                reject(error);
+            }
+        })
     }
 
     /**
@@ -126,13 +85,17 @@ export class PersistenceService {
             throw new Error(`Execute method can only be used for '${allowed.join("', '")}' statements`);
         }
 
-        let client: IPersistenceClient;
-        return this.start()
-            .then(c => client = c)
-            .then(() => this.continue(client, sql, params))
-            .then(result => result.inserted || result.updated || result.deleted)
-            .finally(() => this.end(client, config.commit))
-        ;
+        return new Promise(async (resolve, reject) => {
+            const transaction = this.transact();
+            try {
+                const result = await transaction.continue(sql, params);
+                await transaction.end(config.commit);
+                resolve(result.inserted || result.updated || result.deleted);
+            } catch (error) {
+                await transaction.end(false);
+                reject(error);
+            }
+        })
     }
 
     /**
@@ -146,45 +109,17 @@ export class PersistenceService {
             throw new Error(`Database statement count exceeds allowed count. ${count} statements provided, maximum allowed is ${config.maxStatements}`);
         }
 
-        let client: IPersistenceClient;
-        return this.start()
-            .then(c => client = c)
-            .then(() => this.continue(client, sql, params))
-            .then(() => count)
-            .finally(() => this.end(client, config.commit))
-        ;
-    }
-
-    private static mapResults<T>(input: pg.QueryResult<T>): IPersistenceResult<T> {
-        const dataDefinitionCommand = [ 'CALL', 'DROP', 'CREATE', 'ALTER' ];
-        const dataDefinition = [ 'INSERT', 'UPDATE', 'DELETE', 'SELECT' ];
-
-        if (dataDefinition.includes(input.command)) {
-            return this.mapDataResult(input);
-        } else if (dataDefinitionCommand.includes(input.command)) {
-            return this.getDefaultResult();
-        } else {
-            console.warn(`Command '${input.command}' not fully supported`);
-            return this.getDefaultResult();
-        }
-    }
-
-    private static mapDataResult<T>(input: pg.QueryResult<T>): IPersistenceResult<T> {
-        return {
-            inserted: input.command === 'INSERT' ? input.rowCount : 0,
-            updated: input.command === 'UPDATE' ? input.rowCount : 0,
-            deleted: input.command === 'DELETE' ? input.rowCount : 0,
-            results: input.command === 'SELECT' && input.rows || [],
-        }
-    }
-
-    private static getDefaultResult<T>(): IPersistenceResult<T> {
-        return {
-            inserted: 0,
-            updated: 0,
-            deleted: 0,
-            results: [],
-        }
+        return new Promise(async (resolve, reject) => {
+            const transaction = this.transact();
+            try {
+                await transaction.continue(sql, params);
+                await transaction.end(config.commit);
+                resolve(count);
+            } catch (error) {
+                await transaction.end(false);
+                reject(error);
+            }
+        })
     }
 
     private splitStatements(sql: string): string[] {

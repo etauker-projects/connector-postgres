@@ -1,6 +1,6 @@
-import { IPersistenceClient } from '../persistence/persistence-client.interface';
 import { IPersistenceResult } from '../persistence/persistence-results.interface';
 import { PersistenceService } from '../persistence/persistence-service';
+import { PersistenceTransaction } from '../persistence/persistence-transaction';
 import { IMigration, IMigrationItem, IMigrationItemStatus } from './migration.interface';
 
 export class MigrationRepository {
@@ -15,42 +15,43 @@ export class MigrationRepository {
     // Public methods
     //------------------------------
     public saveMultipleMetadataInNewTransaction(migrations: IMigration[]): Promise<void> {
-        return this.persistenceService.start().then(async client => {
+        return new Promise(async (resolve, reject) => {
+            const transaction = this.persistenceService.transact();
             try {
-                const promises = migrations.map(migration => this.saveSingleMetadata(client, migration));
+                const promises = migrations.map(migration => this.saveSingleMetadata(transaction, migration));
                 await Promise.all(promises);
-                await this.persistenceService.end(client, true);
-                return Promise.resolve();
+                await transaction.end(true);
+                resolve();
             } catch (e) {
-                await this.persistenceService.end(client, false);
-                return Promise.reject(e);
+                await transaction.end(false);
+                reject(e);
             }
         });
     }
 
     public saveSingleMetadataInNewTransaction(migration: IMigration): Promise<void> {
-        return this.persistenceService.start().then(async client => {
+        return new Promise(async (resolve, reject) => {
+            const transaction = this.persistenceService.transact();
             try {
-                await this.saveSingleMetadata(client, migration);
-                await this.persistenceService.end(client, true);
-                return Promise.resolve();
+                await this.saveSingleMetadata(transaction, migration);
+                await transaction.end(true);
+                resolve();
             } catch (e) {
-                await this.persistenceService.end(client, false);
-                return Promise.reject(e);
+                await transaction.end(false);
+                reject(e);
             }
         });
     }
 
-    public getMigrationIdByName(client: IPersistenceClient, migrationName: string): Promise<string> {
-        const transact = this.persistenceService.continue.bind(this, client);
+    public getMigrationIdByName(transaction: PersistenceTransaction, migrationName: string): Promise<string> {
         const query = `SELECT id FROM public.migration WHERE name = '${ migrationName }';`;
-        return transact(query).then(res => {
+        return transaction.continue(query).then(res => {
             return (res as IPersistenceResult<{ id: string }>).results[0].id;
         })
     }
 
-    public async saveSingleMetadata(client: IPersistenceClient, migration: IMigration): Promise<void> {
-        const transact = this.persistenceService.continue.bind(this, client);
+    public async saveSingleMetadata(transaction: PersistenceTransaction, migration: IMigration): Promise<void> {
+        const transact = transaction.continue.bind(transaction);
 
         try {
             const query = `SELECT * FROM public.migration WHERE name = '${migration.name}';`;
@@ -71,20 +72,18 @@ export class MigrationRepository {
         }
     }
 
-    public updateChangeStatus(client: IPersistenceClient, migrationId: string, success: boolean): Promise<void> {
-        const transact = this.persistenceService.continue.bind(this, client);
+    public updateChangeStatus(transaction: PersistenceTransaction, migrationId: string, success: boolean): Promise<void> {
         const status: IMigrationItemStatus = success ? 'SUCCESS' : 'FAILURE';
         const executionTimestamp = success ? ', executed_at = now()' : '';
         const query = `UPDATE public.change SET status = '${ status }'${ executionTimestamp } WHERE migration_id = '${ migrationId }';`;
-        return transact(query).then();
+        return transaction.continue(query).then();
     }
 
-    public updateRollbackStatus(client: IPersistenceClient, migrationId: string, success: boolean): Promise<void> {
-        const transact = this.persistenceService.continue.bind(this, client);
+    public updateRollbackStatus(transaction: PersistenceTransaction, migrationId: string, success: boolean): Promise<void> {
         const status: IMigrationItemStatus = success ? 'SUCCESS' : 'FAILURE';
         const executionTimestamp = success ? ', executed_at = now()' : '';
         const query = `UPDATE public.rollback SET status = '${ status }'${ executionTimestamp } WHERE migration_id = '${ migrationId }';`;
-        return transact(query).then();
+        return transaction.continue(query).then();
     }
 
     //------------------------------

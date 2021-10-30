@@ -1,8 +1,8 @@
-import { IPersistenceService } from '../src/persistence/persistence-service.interface';
+import { PersistenceService } from '../src/persistence/persistence-service';
 import { IIntegrationTestResult } from './integration-test-result.interface';
 
 export interface IIntegrationTest {
     suite: string;
     name: string;
-    run: (service: IPersistenceService) => Promise<IIntegrationTestResult>;
+    run: (service: PersistenceService) => Promise<IIntegrationTestResult>;
 }
