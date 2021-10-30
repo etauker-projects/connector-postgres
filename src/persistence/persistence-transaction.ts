@@ -6,6 +6,7 @@ export class PersistenceTransaction {
 
     private client: IPersistenceClient;
     private open: boolean;
+    private complete: boolean;
     private stack: Promise<any>;
 
     /**
@@ -14,6 +15,7 @@ export class PersistenceTransaction {
     constructor(promise: Promise<IPersistenceClient>) {
         this.client = undefined as any;
         this.open = false;
+        this.complete = false;
         this.stack = promise
             .then(client => {
                 this.client = client;
@@ -69,8 +71,9 @@ export class PersistenceTransaction {
      public end(commit: boolean): Promise<void> {
         const command = commit ? 'COMMIT' : 'ROLLBACK';
 
-        if (!this.open) {
-            return Promise.reject(`Cannot ${command} database transaction, transaction already completed`);
+        if (this.complete) {
+            const error = new Error(`Cannot ${command} database transaction, transaction already completed`);
+            return Promise.reject(error);
         }
 
         return this.ready().then(() => {
@@ -80,6 +83,8 @@ export class PersistenceTransaction {
                 .catch(e => error = e)
                 .finally(() => {
                     this.client.release();
+                    this.complete = true;
+                    this.open = false;
                     return error ? Promise.reject(error) : Promise.resolve();
                 })
             ;
@@ -87,15 +92,18 @@ export class PersistenceTransaction {
     }
 
     /**
-     * Additional check for inconsistent state
+     * Check for inconsistent state done automatically before each database transaction.
      */
-    private ready(): Promise<any> {
+    public ready(): Promise<void> {
         return this.stack.then(() => {
-            if (!this.client) {
-                throw new Error('Unexpected database error occurred: transaction is ready but client is not set');
+            if (this.complete) {
+                throw new Error('Database transaction already completed');
             }
             if (!this.open) {
-                throw new Error('Database transaction already completed');
+                throw new Error('Database connection not open');
+            }
+            if (!this.client) {
+                throw new Error('Unexpected database error occurred: transaction is ready but client is not set');
             }
             return;
         })
