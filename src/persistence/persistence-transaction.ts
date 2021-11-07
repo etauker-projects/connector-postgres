@@ -1,4 +1,4 @@
-import pg from 'pg';
+import pg, { QueryResult } from 'pg';
 import { IPersistenceClient } from './persistence-client.interface';
 import { IPersistenceResult } from './persistence-results.interface';
 
@@ -34,15 +34,7 @@ export class PersistenceTransaction {
             .then(() => this.client.query<T>(sql, params))
             .then(response => {
                 if (Array.isArray(response)) {
-                    return response.reduce((aggregate, item) => {
-                        const mapped = this.mapResults<T>(item);
-                        return {
-                            inserted: aggregate.inserted + mapped.inserted,
-                            updated: aggregate.updated + mapped.updated,
-                            deleted: aggregate.deleted + mapped.deleted,
-                            results: [...aggregate.results, ...mapped.results],
-                        }
-                    }, this.getDefaultResult<T>());
+                    return response.reduce(this.addQueryResult, this.getDefaultResult<T>());
                 }
                 return this.mapResults<T>(response);
             })
@@ -140,4 +132,19 @@ export class PersistenceTransaction {
             results: [],
         }
     }
+
+    private addQueryResult<T>(aggregate: IPersistenceResult<T>, item: QueryResult<T>): IPersistenceResult<T> {
+        const mapped = this.mapResults<T>(item);
+        return this.mergeResults(aggregate, mapped);
+    }
+
+    private mergeResults<T>(aggregate: IPersistenceResult<T>, item: IPersistenceResult<T>): IPersistenceResult<T> {
+        return {
+            inserted: aggregate.inserted + item.inserted,
+            updated: aggregate.updated + item.updated,
+            deleted: aggregate.deleted + item.deleted,
+            results: [...aggregate.results, ...item.results],
+        }
+    }
 }
+

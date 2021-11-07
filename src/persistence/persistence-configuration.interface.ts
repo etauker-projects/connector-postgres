@@ -1,5 +1,5 @@
-import pg from 'pg';
+import { IPoolConfig } from '../postgres/postgres-pool-configuration.interface';
 
-export interface IPersistenceConfiguration extends pg.PoolConfig {
+export interface IPersistenceConfig extends IPoolConfig {
 
 }

@@ -1,19 +1,21 @@
 import pg from 'pg';
-const { Pool } = pg;
+import { PoolFactory } from '../postgres/postgres-pool-factory';
+import { IPool } from '../postgres/postgres-pool.interface';
 
-import { IPersistenceConfiguration } from './persistence-configuration.interface';
+import { IPersistenceConfig } from './persistence-configuration.interface';
+import { IPersistenceResult } from './persistence-results.interface';
 import { PersistenceTransaction } from './persistence-transaction';
 import { IQueryConfig } from './query-configuration.interface';
 
 export class PersistenceService {
 
-    private pool: pg.Pool;
+    private pool: IPool;
     private config: IQueryConfig = {
         commit: true,
         maxStatements: 1,
     };
 
-    constructor(config: IPersistenceConfiguration) {
+    constructor(config: IPersistenceConfig, factory: PoolFactory) {
         if (!config.database) {
             throw new Error('Database not set');
         }
@@ -29,7 +31,7 @@ export class PersistenceService {
         if (!config.port) {
             throw new Error('Database port not set');
         }
-        this.pool = new Pool(config);
+        this.pool = factory.makePool(config);
     }
 
     //------------------------------
@@ -48,22 +50,30 @@ export class PersistenceService {
      * Does not commit the transaction.
      */
      public query<T>(sql: string, params: any[] = [], partialConfig?: Partial<Omit<IQueryConfig, 'commit'>>): Promise<T[]> {
-        const config: IQueryConfig = { ...this.config, ...partialConfig };
-        const allowed = ['SELECT'];
-        const statements = this.splitStatements(sql);
-
-        if (statements.length > config.maxStatements) {
-            throw new Error(`SQL query count exceeds allowed count. ${statements.length} queries provided, maximum allowed is ${config.maxStatements}`);
-        } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
-            throw new Error(`Query method can only be used for '${allowed.join("', '")}' statements`);
-        }
-
         return new Promise(async (resolve, reject) => {
+            const config: IQueryConfig = { ...this.config, ...partialConfig };
+            const allowed = ['SELECT'];
+            const statements = this.splitStatements(sql);
+
+            if (statements.length > config.maxStatements) {
+                reject(new Error(`SQL query count exceeds allowed count. ${statements.length} queries provided, maximum allowed is ${config.maxStatements}`));
+            } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
+                reject(new Error(`Query method can only be used for '${allowed.join("', '")}' statements`));
+            }
+
+            // TODO: clean this up
             const transaction = this.transact();
             try {
-                const result = await transaction.continue<T>(sql, params);
-                await transaction.end(false);
-                resolve(result.results);
+                const results = statements.map(async statement => await transaction.continue<T>(statement, params))
+                return Promise.all(results).then(results => {
+                    return results.reduce((aggregate, res) => this.mergeResults(aggregate, res), this.getDefaultResult());
+                }).then(async merged => {
+                    await transaction.end(false);
+                    resolve(merged.results);
+                }).catch(async error => {
+                    await transaction.end(false);
+                    reject(error);
+                })
             } catch (error) {
                 await transaction.end(false);
                 reject(error);
@@ -122,6 +132,25 @@ export class PersistenceService {
         })
     }
 
+
+    private getDefaultResult<T>(): IPersistenceResult<T> {
+        return {
+            inserted: 0,
+            updated: 0,
+            deleted: 0,
+            results: [],
+        }
+    }
+
+    private mergeResults<T>(aggregate: IPersistenceResult<T>, item: IPersistenceResult<T>): IPersistenceResult<T> {
+        return {
+            inserted: aggregate.inserted + item.inserted,
+            updated: aggregate.updated + item.updated,
+            deleted: aggregate.deleted + item.deleted,
+            results: [...aggregate.results, ...item.results],
+        }
+    }
+
     private splitStatements(sql: string): string[] {
         return sql.split(';').filter(part => part.trim());
     }
@@ -131,13 +160,13 @@ export class PersistenceService {
     }
 
     private allStatementsContainAnyKeyword(statements: string[], keywords: string[]): boolean {
-        statements.forEach(statement => {
-            keywords.forEach(keyword => {
+        return statements.every(statement => {
+            return keywords.every(keyword => {
                 if (!statement.toUpperCase().includes(keyword.toUpperCase())) {
                     return false;
                 }
+                return true;
             })
         })
-        return true;
     }
 }
