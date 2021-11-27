@@ -7,7 +7,7 @@ const tests = [
         name: 'select should return correct results',
         run: async (service: PersistenceService) => {
             const query = SELECT_QUERY;
-            const result = await service.query(query);
+            const result = await service.select(query);
             assert.equal(result.length, 0, 'incorrect result count');
             assert.deepStrictEqual(result, [], 'incorrect results');
             return { success: true, message: 'Success' };
@@ -28,7 +28,7 @@ const tests = [
         name: 'select should return correct results after insert',
         run: async (service: PersistenceService) => {
             const query = SELECT_QUERY;
-            const result = await service.query(query);
+            const result = await service.select(query);
             assert.equal(result.length, 1, 'incorrect result count');
             assert.deepStrictEqual(result, [INSERTED], 'incorrect results');
             return { success: true, message: 'Success' };
@@ -53,7 +53,7 @@ const tests = [
         name: 'select should return correct results after insert of not unique value',
         run: async (service: PersistenceService) => {
             const query = SELECT_QUERY;
-            const result = await service.query(query);
+            const result = await service.select(query);
             assert.equal(result.length, 1, 'incorrect result count');
             assert.deepStrictEqual(result, [INSERTED], 'incorrect results');
             return { success: true, message: 'Success' };
@@ -74,7 +74,7 @@ const tests = [
         name: 'select should return correct results after update',
         run: async (service: PersistenceService) => {
             const query = SELECT_QUERY;
-            const result = await service.query(query);
+            const result = await service.select(query);
             assert.equal(result.length, 1, 'incorrect result count');
             assert.deepStrictEqual(result, [UPDATED], 'incorrect results');
             return { success: true, message: 'Success' };
@@ -95,7 +95,7 @@ const tests = [
         name: 'select should return correct results after delete',
         run: async (service: PersistenceService) => {
             const query = SELECT_QUERY;
-            const result = await service.query(query);
+            const result = await service.select(query);
             assert.equal(result.length, 0, 'incorrect result count');
             assert.deepStrictEqual(result, [], 'incorrect results');
             return { success: true, message: 'Success' };
@@ -120,7 +120,7 @@ const tests = [
         name: 'select should return correct results after null insert',
         run: async (service: PersistenceService) => {
             const query = SELECT_QUERY;
-            const result = await service.query(query);
+            const result = await service.select(query);
             assert.equal(result.length, 0, 'incorrect result count');
             assert.deepStrictEqual(result, [], 'incorrect results');
             return { success: true, message: 'Success' };

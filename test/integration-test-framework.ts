@@ -33,7 +33,7 @@ export class IntegrationTestFramework {
     
     public getPostgresVersion(persistenceService: PersistenceService): Promise<string> {
         return persistenceService
-            .query<{ version: string }>('SELECT version();')
+            .select<{ version: string }>('SELECT version();')
             .then(res => res[0].version)
         ;
     }

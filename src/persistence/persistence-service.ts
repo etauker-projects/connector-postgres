@@ -41,7 +41,7 @@ export class PersistenceService {
             if (statements.length > config.maxStatements) {
                 reject(new Error(`SQL statement count exceeds allowed count. ${statements.length} statements provided, maximum allowed is ${config.maxStatements}`));
             } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
-                reject(new Error(`Execute method can only be used for '${allowed.join("', '")}' statements`));
+                reject(new Error(`Insert method can only be used for '${allowed.join("', '")}' statements`));
             }
 
             const transaction = this.transact();
@@ -69,25 +69,27 @@ export class PersistenceService {
             if (statements.length > 1) {
                 reject(new Error(`SQL query count exceeds allowed count. ${statements.length} queries provided, maximum allowed is ${this.config.maxStatements}`));
             } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
-                reject(new Error(`Query method can only be used for '${allowed.join("', '")}' statements`));
-            }
+                reject(new Error(`Select method can only be used for '${allowed.join("', '")}' statements`));
+            } else {
 
-            // TODO: clean this up
-            const transaction = this.transact();
-            try {
-                transaction.continue<T>(statements[0], params)
-                .then(async results => {
-                    await transaction.end(false);
-                    resolve(results.results);
-                })
-                .catch(async error => {
+                // TODO: clean this up
+                const transaction = this.transact();
+                try {
+                    transaction.continue<T>(statements[0], params)
+                    .then(async results => {
+                        await transaction.end(false);
+                        resolve(results.results);
+                    })
+                    .catch(async error => {
+                        await transaction.end(false);
+                        reject(error);
+                    })
+                } catch (error) {
                     await transaction.end(false);
                     reject(error);
-                })
-            } catch (error) {
-                await transaction.end(false);
-                reject(error);
+                }
             }
+
         })
     }
 
@@ -105,19 +107,20 @@ export class PersistenceService {
             if (statements.length > config.maxStatements) {
                 reject(new Error(`SQL statement count exceeds allowed count. ${statements.length} statements provided, maximum allowed is ${config.maxStatements}`));
             } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
-                reject(new Error(`Execute method can only be used for '${allowed.join("', '")}' statements`));
+                reject(new Error(`Update method can only be used for '${allowed.join("', '")}' statements`));
+            } else {
+                const transaction = this.transact();
+                try {
+                    const result = await transaction.continue(sql, params);
+                    await transaction.end(config.commit);
+                    // TODO: append 'RETURNING *' to the query and return the updated items
+                    resolve(result.updated);
+                } catch (error) {
+                    await transaction.end(false);
+                    reject(error);
+                }
             }
 
-            const transaction = this.transact();
-            try {
-                const result = await transaction.continue(sql, params);
-                await transaction.end(config.commit);
-                // TODO: append 'RETURNING *' to the query and return the updated items
-                resolve(result.updated);
-            } catch (error) {
-                await transaction.end(false);
-                reject(error);
-            }
         })
     }
 
@@ -135,59 +138,23 @@ export class PersistenceService {
             if (statements.length > config.maxStatements) {
                 reject(new Error(`SQL statement count exceeds allowed count. ${statements.length} statements provided, maximum allowed is ${config.maxStatements}`));
             } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
-                reject(new Error(`Execute method can only be used for '${allowed.join("', '")}' statements`));
-            }
-
-            const transaction = this.transact();
-            try {
-                const result = await transaction.continue(sql, params);
-                await transaction.end(config.commit);
-                // TODO: append 'RETURNING *' to the query and return the deleted items
-                resolve(result.deleted);
-            } catch (error) {
-                await transaction.end(false);
-                reject(error);
-            }
-        })
-    }
-
-
-    /**
-     * Execute a 'SELECT' statement and return the list of results.
-     * Does not commit the transaction.
-     */
-    public query<T>(sql: string, params: any[] = [], partialConfig?: Partial<Omit<IQueryConfig, 'commit'>>): Promise<T[]> {
-        return new Promise(async (resolve, reject) => {
-
-            const config: IQueryConfig = { ...this.config, ...partialConfig };
-            const allowed = ['SELECT'];
-            const statements = this.splitStatements(sql);
-
-            if (statements.length > config.maxStatements) {
-                reject(new Error(`SQL query count exceeds allowed count. ${statements.length} queries provided, maximum allowed is ${config.maxStatements}`));
-            } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
-                reject(new Error(`Query method can only be used for '${allowed.join("', '")}' statements`));
-            }
-
-            // TODO: clean this up
-            const transaction = this.transact();
-            try {
-                const results = statements.map(statement => transaction.continue<T>(statement, params))
-                return Promise.all(results).then(results => {
-                    return results.reduce((aggregate, res) => this.mergeResults(aggregate, res), this.getDefaultResult());
-                }).then(async merged => {
-                    await transaction.end(false);
-                    resolve(merged.results);
-                }).catch(async error => {
+                reject(new Error(`Delete method can only be used for '${allowed.join("', '")}' statements`));
+            } else {
+                const transaction = this.transact();
+                try {
+                    const result = await transaction.continue(sql, params);
+                    await transaction.end(config.commit);
+                    // TODO: append 'RETURNING *' to the query and return the deleted items
+                    resolve(result.deleted);
+                } catch (error) {
                     await transaction.end(false);
                     reject(error);
-                })
-            } catch (error) {
-                await transaction.end(false);
-                reject(error);
+                }
             }
+
         })
     }
+
 
     /**
      * Execute 'INSERT', 'UPDATE' or 'DELETE' statement and return the number of affected rows.
@@ -206,16 +173,16 @@ export class PersistenceService {
                 reject(new Error(`SQL statement count exceeds allowed count. ${statements.length} statements provided, maximum allowed is ${config.maxStatements}`));
             } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
                 reject(new Error(`Execute method can only be used for '${allowed.join("', '")}' statements`));
-            }
-
-            const transaction = this.transact();
-            try {
-                const result = await transaction.continue(sql, params);
-                await transaction.end(config.commit);
-                resolve(result.inserted || result.updated || result.deleted);
-            } catch (error) {
-                await transaction.end(false);
-                reject(error);
+            } else {
+                const transaction = this.transact();
+                try {
+                    const result = await transaction.continue(sql, params);
+                    await transaction.end(config.commit);
+                    resolve(result.inserted || result.updated || result.deleted);
+                } catch (error) {
+                    await transaction.end(false);
+                    reject(error);
+                }
             }
         })
     }
@@ -231,17 +198,18 @@ export class PersistenceService {
 
             if (count > config.maxStatements) {
                 reject(new Error(`Database statement count exceeds allowed count. ${count} statements provided, maximum allowed is ${config.maxStatements}`));
+            } else {
+                const transaction = this.transact();
+                try {
+                    await transaction.continue(sql, params);
+                    await transaction.end(config.commit);
+                    resolve(count);
+                } catch (error) {
+                    await transaction.end(false);
+                    reject(error);
+                }
             }
 
-            const transaction = this.transact();
-            try {
-                await transaction.continue(sql, params);
-                await transaction.end(config.commit);
-                resolve(count);
-            } catch (error) {
-                await transaction.end(false);
-                reject(error);
-            }
         })
     }
 
