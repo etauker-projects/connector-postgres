@@ -106,7 +106,7 @@ describe('PersistenceService', () => {
         it('should close connection on error', () => {
             const sql = INSERT_STATEMENT;
             const message = 'Something unexpected happened';
-            (transaction.continue as SinonStub).throws(new Error(message));
+            (transaction.continue as SinonStub).rejects(new Error(message));
 
             return service.insert(sql, [])
                 .then(result => fail(new Error('Exception should have been thrown')))
@@ -180,7 +180,7 @@ describe('PersistenceService', () => {
         it('should close connection on error', () => {
             const sql = SELECT_STATEMENT;
             const message = 'Something unexpected happened';
-            (transaction.continue as SinonStub).throws(new Error(message));
+            (transaction.continue as SinonStub).rejects(new Error(message));
 
             return service.select(sql, [])
                 .then(result => fail(new Error('Exception should have been thrown')))
@@ -263,7 +263,7 @@ describe('PersistenceService', () => {
         it('should close connection on error', () => {
             const sql = UPDATE_STATEMENT;
             const message = 'Something unexpected happened';
-            (transaction.continue as SinonStub).throws(new Error(message));
+            (transaction.continue as SinonStub).rejects(new Error(message));
 
             return service.update(sql, [])
                 .then(result => fail(new Error('Exception should have been thrown')))
@@ -346,7 +346,7 @@ describe('PersistenceService', () => {
         it('should close connection on error', () => {
             const sql = DELETE_STATEMENT;
             const message = 'Something unexpected happened';
-            (transaction.continue as SinonStub).throws(new Error(message));
+            (transaction.continue as SinonStub).rejects(new Error(message));
 
             return service.delete(sql, [])
                 .then(result => fail(new Error('Exception should have been thrown')))

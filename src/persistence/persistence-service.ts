@@ -1,6 +1,7 @@
 import { IPool } from '../postgres/postgres-pool.interface';
 import { IQueryConfig } from './query-configuration.interface';
 import { PersistenceTransaction } from './persistence-transaction';
+import { IPersistenceResult } from './persistence-results.interface';
 
 export class PersistenceService {
 
@@ -30,66 +31,32 @@ export class PersistenceService {
     /**
      * Execute 'INSERT' statement and return the number of inserted rows.
      */
-     public insert(sql: string, params: any[] = [], partialConfig?: Partial<IQueryConfig>): Promise<number> {
-        return new Promise(async (resolve, reject) => {
+    public insert(sql: string, params: any[] = [], partialConfig?: Partial<IQueryConfig>): Promise<number> {
+        const config: IQueryConfig = { ...this.config, ...partialConfig };
+        const statements = this.splitStatements(sql);
+        // TODO: append 'RETURNING *' to the query and return the inserted items
 
-            const config: IQueryConfig = { ...this.config, ...partialConfig };
-            const allowed = [ 'INSERT' ];
-            const statements = this.splitStatements(sql);
-
-            if (statements.length > config.maxStatements) {
-                reject(new Error(`SQL statement count exceeds allowed count. ${statements.length} statements provided, maximum allowed is ${config.maxStatements}`));
-            } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
-                reject(new Error(`Insert method can only be used for '${allowed.join("', '")}' statements`));
-            }
-
-            const transaction = this.transact();
-            try {
-                const result = await transaction.continue(sql, params);
-                await transaction.end(config.commit);
-                // TODO: append 'RETURNING *' to the query and return the inserted items
-                resolve(result.inserted);
-            } catch (error) {
-                await transaction.end(false);
-                reject(error);
-            }
-        })
+        return Promise.resolve()
+            .then(() => this.verifyStatementCount(config.maxStatements, statements.length))
+            .then(() => this.verifyStatementMethod('Insert', 'INSERT', sql))
+            .then(() => this.execute(sql, params, config.commit))
+            .then(res => res.inserted)
+        ;
     }
 
     /**
      * Execute a 'SELECT' statement and return the list of results.
      */
     public select<T>(sql: string, params: any[] = []): Promise<T[]> {
-        return new Promise(async (resolve, reject) => {
+        const statements = this.splitStatements(sql);
+        // TODO: append 'RETURNING *' to the query and return the inserted items
 
-            const allowed = [ 'SELECT' ];
-            const statements = this.splitStatements(sql);
-
-            if (statements.length > 1) {
-                reject(new Error(`SQL statement count exceeds allowed count. ${statements.length} statements provided, maximum allowed is ${this.config.maxStatements}`));
-            } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
-                reject(new Error(`Select method can only be used for '${allowed.join("', '")}' statements`));
-            } else {
-
-                // TODO: clean this up
-                const transaction = this.transact();
-                try {
-                    transaction.continue<T>(statements[0], params)
-                    .then(async results => {
-                        await transaction.end(false);
-                        resolve(results.results);
-                    })
-                    .catch(async error => {
-                        await transaction.end(false);
-                        reject(error);
-                    })
-                } catch (error) {
-                    await transaction.end(false);
-                    reject(error);
-                }
-            }
-
-        })
+        return Promise.resolve()
+            .then(() => this.verifyStatementCount(this.config.maxStatements, statements.length))
+            .then(() => this.verifyStatementMethod('Select', 'SELECT', sql))
+            .then(() => this.execute<T>(sql, params, false))
+            .then(res => res.results)
+        ;
     }
 
 
@@ -97,30 +64,16 @@ export class PersistenceService {
      * Execute 'UPDATE' statement and return the number of updated rows.
      */
     public update(sql: string, params: any[] = [], partialConfig?: Partial<IQueryConfig>): Promise<number> {
-        return new Promise(async (resolve, reject) => {
+        const config: IQueryConfig = { ...this.config, ...partialConfig };
+        const statements = this.splitStatements(sql);
+        // TODO: append 'RETURNING *' to the query and return the inserted items
 
-            const config: IQueryConfig = { ...this.config, ...partialConfig };
-            const allowed = [ 'UPDATE' ];
-            const statements = this.splitStatements(sql);
-
-            if (statements.length > config.maxStatements) {
-                reject(new Error(`SQL statement count exceeds allowed count. ${statements.length} statements provided, maximum allowed is ${config.maxStatements}`));
-            } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
-                reject(new Error(`Update method can only be used for '${allowed.join("', '")}' statements`));
-            } else {
-                const transaction = this.transact();
-                try {
-                    const result = await transaction.continue(sql, params);
-                    await transaction.end(config.commit);
-                    // TODO: append 'RETURNING *' to the query and return the updated items
-                    resolve(result.updated);
-                } catch (error) {
-                    await transaction.end(false);
-                    reject(error);
-                }
-            }
-
-        })
+        return Promise.resolve()
+            .then(() => this.verifyStatementCount(config.maxStatements, statements.length))
+            .then(() => this.verifyStatementMethod('Update', 'UPDATE', sql))
+            .then(() => this.execute(sql, params, config.commit))
+            .then(res => res.updated)
+        ;
     }
 
 
@@ -128,45 +81,44 @@ export class PersistenceService {
      * Execute 'DELETE' statement and return the number of deleted rows.
      */
     public delete(sql: string, params: any[] = [], partialConfig?: Partial<IQueryConfig>): Promise<number> {
-        return new Promise(async (resolve, reject) => {
+        const config: IQueryConfig = { ...this.config, ...partialConfig };
+        const statements = this.splitStatements(sql);
+        // TODO: append 'RETURNING *' to the query and return the inserted items
 
-            const config: IQueryConfig = { ...this.config, ...partialConfig };
-            const allowed = [ 'DELETE' ];
-            const statements = this.splitStatements(sql);
-
-            if (statements.length > config.maxStatements) {
-                reject(new Error(`SQL statement count exceeds allowed count. ${statements.length} statements provided, maximum allowed is ${config.maxStatements}`));
-            } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
-                reject(new Error(`Delete method can only be used for '${allowed.join("', '")}' statements`));
-            } else {
-                const transaction = this.transact();
-                try {
-                    const result = await transaction.continue(sql, params);
-                    await transaction.end(config.commit);
-                    // TODO: append 'RETURNING *' to the query and return the deleted items
-                    resolve(result.deleted);
-                } catch (error) {
-                    await transaction.end(false);
-                    reject(error);
-                }
-            }
-
-        })
+        return Promise.resolve()
+            .then(() => this.verifyStatementCount(config.maxStatements, statements.length))
+            .then(() => this.verifyStatementMethod('Delete', 'DELETE', sql))
+            .then(() => this.execute(sql, params, config.commit))
+            .then(res => res.deleted)
+        ;
     }
 
+
+    private execute<T>(sql: string, params: any[] = [], commit: boolean): Promise<IPersistenceResult<T>> {
+        return new Promise((resolve, reject) => {
+            const transaction = this.transact();
+            transaction.continue<T>(sql, params)
+                .then(res => transaction.end(commit).then(() => resolve(res)))
+                .catch(err => transaction.end(false).then(() => reject(err)))
+                .catch(err => reject(err))
+        })
+    }
 
     private splitStatements(sql: string): string[] {
         return sql.split(';').filter(part => part.trim());
     }
 
-    private allStatementsContainAnyKeyword(statements: string[], keywords: string[]): boolean {
-        return statements.every(statement => {
-            return keywords.some(keyword => {
-                if (!statement.toUpperCase().includes(keyword.toUpperCase())) {
-                    return false;
-                }
-                return true;
-            })
-        })
+    private verifyStatementCount(maximum: number, actual: number): Promise<void> {
+        if (actual > maximum) {
+            throw new Error(`SQL statement count exceeds allowed count. ${actual} statements provided, maximum allowed is ${maximum}`);
+        }
+        return Promise.resolve();
+    }
+
+    private verifyStatementMethod(method: string, keyword: string, sql: string): Promise<void> {
+        if (!sql.toLowerCase().split(' ').includes(keyword.toLowerCase())) {
+            throw new Error(`${method} method can only be used for '${keyword}' statements`);
+        }
+        return Promise.resolve();
     }
 }
