@@ -142,7 +142,7 @@ export class PersistenceService {
 
     private allStatementsContainAnyKeyword(statements: string[], keywords: string[]): boolean {
         return statements.every(statement => {
-            return keywords.every(keyword => {
+            return keywords.some(keyword => {
                 if (!statement.toUpperCase().includes(keyword.toUpperCase())) {
                     return false;
                 }
