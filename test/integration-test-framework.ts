@@ -118,7 +118,7 @@ export class IntegrationTestFramework {
         return Promise.resolve({
             databaseConfig: {
                 database: 'local_01',
-                user: 'local_01_admin',
+                user: 'development_admin',
                 password: 'admin',
                 host: 'localhost',
                 port: 5432,
