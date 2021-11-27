@@ -32,6 +32,7 @@ export class PersistenceService {
      */
      public query<T>(sql: string, params: any[] = [], partialConfig?: Partial<Omit<IQueryConfig, 'commit'>>): Promise<T[]> {
         return new Promise(async (resolve, reject) => {
+
             const config: IQueryConfig = { ...this.config, ...partialConfig };
             const allowed = ['SELECT'];
             const statements = this.splitStatements(sql);
@@ -66,17 +67,21 @@ export class PersistenceService {
      * Execute 'INSERT', 'UPDATE' or 'DELETE' statement and return the number of affected rows.
      */
     public execute(sql: string, params: any[] = [], partialConfig?: Partial<IQueryConfig>): Promise<number> {
-        const config: IQueryConfig = { ...this.config, ...partialConfig };
-        const allowed = ['INSERT', 'UPDATE', 'DELETE'];
-        const statements = this.splitStatements(sql);
-
-        if (statements.length > config.maxStatements) {
-            throw new Error(`SQL statement count exceeds allowed count. ${statements.length} statements provided, maximum allowed is ${config.maxStatements}`);
-        } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
-            throw new Error(`Execute method can only be used for '${allowed.join("', '")}' statements`);
-        }
-
         return new Promise(async (resolve, reject) => {
+
+            const config: IQueryConfig = { ...this.config, ...partialConfig };
+            const allowed = ['INSERT', 'UPDATE', 'DELETE'];
+            const statements = this.splitStatements(sql);
+
+            if (config.maxStatements > 1) {
+                // TODO: find if there is a good use case for this or if it can be scrapped
+                reject(new Error(`Executing multiple statements not implemented`));
+            } else if (statements.length > config.maxStatements) {
+                reject(new Error(`SQL statement count exceeds allowed count. ${statements.length} statements provided, maximum allowed is ${config.maxStatements}`));
+            } else if (!this.allStatementsContainAnyKeyword(statements, allowed)) {
+                reject(new Error(`Execute method can only be used for '${allowed.join("', '")}' statements`));
+            }
+
             const transaction = this.transact();
             try {
                 const result = await transaction.continue(sql, params);
@@ -93,14 +98,15 @@ export class PersistenceService {
      * Execute any kind of database statements and return the number of statement executed.
      */
     public any(sql: string, params: any[] = [], partialConfig?: Partial<IQueryConfig>): Promise<number> {
-        const config: IQueryConfig = { ...this.config, ...partialConfig };
-        const count = this.getStatementCount(sql);
-
-        if (count > config.maxStatements) {
-            throw new Error(`Database statement count exceeds allowed count. ${count} statements provided, maximum allowed is ${config.maxStatements}`);
-        }
-
         return new Promise(async (resolve, reject) => {
+
+            const config: IQueryConfig = { ...this.config, ...partialConfig };
+            const count = this.getStatementCount(sql);
+
+            if (count > config.maxStatements) {
+                reject(new Error(`Database statement count exceeds allowed count. ${count} statements provided, maximum allowed is ${config.maxStatements}`));
+            }
+
             const transaction = this.transact();
             try {
                 await transaction.continue(sql, params);

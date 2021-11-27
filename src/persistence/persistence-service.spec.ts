@@ -7,6 +7,7 @@ import { PersistenceService } from './persistence-service';
 import { IQueryConfig } from './query-configuration.interface';
 import { PersistenceTransactionMock } from './persistence-transaction.mock';
 import { PoolFactoryMock } from '../postgres/postgres-pool-factory.mock';
+import { randomUUID } from 'crypto';
 
 describe('PersistenceService', () => {
 
@@ -16,6 +17,7 @@ describe('PersistenceService', () => {
         let service: PersistenceService;
         let transaction: PersistenceTransaction;
         let stub: sinon.SinonStub;
+
         beforeEach(() => {
             config = {
                 database: 'database',
@@ -28,7 +30,6 @@ describe('PersistenceService', () => {
             const factory = new PoolFactoryMock();
             service = new PersistenceService(factory.makePool(config));
             stub = sinon.stub(service, 'transact').returns(transaction);
-
         })
 
         it('(maxStatements = 1) => should return results for 1 SELECT statement', () => {
@@ -104,31 +105,82 @@ describe('PersistenceService', () => {
     })
 
     describe('execute', () => {
+
+        let config: IPersistenceConfig;
+        let service: PersistenceService;
+        let transaction: PersistenceTransaction;
+        let stub: sinon.SinonStub;
+
+        beforeEach(() => {
+            config = {
+                database: 'database',
+                user: 'user',
+                password: 'password',
+                host: 'host',
+                port: 1234,
+            }
+            transaction = PersistenceTransactionMock.getInstance();
+            const factory = new PoolFactoryMock();
+            service = new PersistenceService(factory.makePool(config));
+            stub = sinon.stub(service, 'transact').returns(transaction);
+        })
+
         it('(maxStatements = 1) => should return results for 1 INSERT statement', () => {
-            throw new Error('Test "(maxStatements = 1) => should return results for 1 INSERT statement" not implemented');
+            const name = 'Some Name';
+            const id = randomUUID();
+            const query = `INSERT INTO example (id, name) VALUES ('${id}'', '${name}');`;
+            return service
+                .execute(query, [], { commit: false })
+                .then(result => assert.equal(result, 1, 'incorrect number of items created'))
+            ;
         })
         it('(maxStatements = 1) => should return results for 1 UPDATE statement', () => {
-            throw new Error('Test "(maxStatements = 1) => should return results for 1 UPDATE statement" not implemented');
+            const name = 'Some Name';
+            const id = randomUUID();
+            const query = `UPDATE example SET id = '${id}', name = '${name}';`;
+            return service
+                .execute(query, [], { commit: false })
+                .then(result => assert.equal(result, 1, 'incorrect number of items updated'))
+            ;
         })
         it('(maxStatements = 1) => should return results for 1 DELETE statement', () => {
-            throw new Error('Test "(maxStatements = 1) => should return results for 1 DELETE statement" not implemented');
+            const id = randomUUID();
+            const query = `DELETE FROM example WHERE id = '${id}';`;
+            return service
+                .execute(query, [], { commit: false })
+                .then(result => assert.equal(result, 1, 'incorrect number of items deleted'))
+            ;
         })
-        it('(maxStatements = 4) => should return combined results for 3 statement', () => {
+        // note: not yet supported
+        xit('(maxStatements = 4) => should return combined results for 3 statement', () => {
             throw new Error('Test "(maxStatements = 4) => should return combined results for 3 statement" not implemented');
         })
-        it('(maxStatements = 2) => should throw error for 3 statements', () => {
+        // note: not yet supported
+        xit('(maxStatements = 2) => should throw error for 3 statements', () => {
             throw new Error('Test "(maxStatements = 2) => should throw error for 3 statements" not implemented');
         })
-        it('should throw exception for SELECT statement', () => {
-            throw new Error('Test "should throw exception for SELECT statement" not implemented');
+        it('should throw exception for SELECT statement', (done) => {
+            const query = `SELECT * FROM example;`;
+            const expected = `Execute method can only be used for 'INSERT', 'UPDATE', 'DELETE' statements`;
+            service
+                .execute(query)
+                .then(result => done('exception should have been thrown'))
+                .catch(error => {
+                    assert.equal(error.message, expected);
+                    done();
+                })
+            ;
         })
-        it('should close a connection on commit', () => {
+        // TODO: test on transaction level
+        xit('should close a connection on commit', () => {
             throw new Error('Test "should close a connection on commit" not implemented');
         })
-        it('should close a connection on rollback', () => {
+        // TODO: test on transaction level
+        xit('should close a connection on rollback', () => {
             throw new Error('Test "should close a connection on rollback" not implemented');
         })
-        it('should connection on error', () => {
+        // TODO: test on transaction level
+        xit('should close connection on error', () => {
             throw new Error('Test "should connection on error" not implemented');
         })
     })
