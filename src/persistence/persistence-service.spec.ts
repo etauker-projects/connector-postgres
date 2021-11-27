@@ -1,7 +1,6 @@
 import 'mocha';
 import sinon, { SinonStub } from 'sinon';
 import assert from 'assert';
-import { IPersistenceClient } from './persistence-client.interface';
 import { PersistenceTransaction } from './persistence-transaction';
 import { IPersistenceConfig } from './persistence-configuration.interface';
 import { PersistenceService } from './persistence-service';

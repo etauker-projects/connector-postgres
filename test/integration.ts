@@ -4,7 +4,10 @@ import { PersistenceService } from '../src/persistence/persistence-service';
 import { IntegrationTestFramework } from './integration-test-framework';
 import { MigrationService } from '../src/migration/migration-service';
 import { IIntegrationTestConfiguration } from './integration-test-configuration.interface';
+import { PoolFactory } from '../src/postgres/postgres-pool-factory';
+import { IPool } from '../src/postgres/postgres-pool.interface';
 
+let pool: IPool;
 let testConfig: IIntegrationTestConfiguration;
 let persistenceService: PersistenceService;
 let migrationService: MigrationService;
@@ -17,10 +20,12 @@ const testFileRoot = path.resolve(rootPath, 'tests');
 const testMigrationPath = path.resolve(rootPath, 'migrations');
 const framework = new IntegrationTestFramework();
 
+
 framework.loadTestConfig(configPath)
     .then(config => testConfig = config)
+    .then(() => pool = PoolFactory.makePool(testConfig.databaseConfig))
 
-    .then(() => new PersistenceService(testConfig.databaseConfig))
+    .then(() => new PersistenceService(pool))
     .then(service => persistenceService = service)
 
     .then(() => new MigrationService(testConfig.migrationConfig, persistenceService))

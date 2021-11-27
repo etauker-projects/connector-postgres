@@ -1,11 +1,7 @@
-import pg from 'pg';
-import { PoolFactory } from '../postgres/postgres-pool-factory';
 import { IPool } from '../postgres/postgres-pool.interface';
-
-import { IPersistenceConfig } from './persistence-configuration.interface';
 import { IPersistenceResult } from './persistence-results.interface';
-import { PersistenceTransaction } from './persistence-transaction';
 import { IQueryConfig } from './query-configuration.interface';
+import { PersistenceTransaction } from './persistence-transaction';
 
 export class PersistenceService {
 
@@ -15,23 +11,8 @@ export class PersistenceService {
         maxStatements: 1,
     };
 
-    constructor(config: IPersistenceConfig, factory: PoolFactory) {
-        if (!config.database) {
-            throw new Error('Database not set');
-        }
-        if (!config.user) {
-            throw new Error('Database user not set');
-        }
-        if (!config.password) {
-            throw new Error('Database password not set');
-        }
-        if (!config.host) {
-            throw new Error('Database host not set');
-        }
-        if (!config.port) {
-            throw new Error('Database port not set');
-        }
-        this.pool = factory.makePool(config);
+    constructor(pool: IPool) {
+        this.pool = pool;
     }
 
     //------------------------------
@@ -64,7 +45,7 @@ export class PersistenceService {
             // TODO: clean this up
             const transaction = this.transact();
             try {
-                const results = statements.map(async statement => await transaction.continue<T>(statement, params))
+                const results = statements.map(statement => transaction.continue<T>(statement, params))
                 return Promise.all(results).then(results => {
                     return results.reduce((aggregate, res) => this.mergeResults(aggregate, res), this.getDefaultResult());
                 }).then(async merged => {

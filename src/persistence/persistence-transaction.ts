@@ -19,9 +19,13 @@ export class PersistenceTransaction {
         this.stack = promise
             .then(client => {
                 this.client = client;
-                return client.query('BEGIN');
+                return this.client.query('BEGIN');
             })
-            .then(() => this.open = true);
+            .then(() => this.open = true)
+            .catch(error => {
+                console.error(error);
+                this.open = false;
+            });
     }
 
     /**
@@ -34,7 +38,7 @@ export class PersistenceTransaction {
             .then(() => this.client.query<T>(sql, params))
             .then(response => {
                 if (Array.isArray(response)) {
-                    return response.reduce(this.addQueryResult, this.getDefaultResult<T>());
+                    return response.reduce(this.addQueryResult.bind(this), this.getDefaultResult<T>());
                 }
                 return this.mapResults<T>(response);
             })
