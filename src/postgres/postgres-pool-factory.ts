@@ -1,11 +1,12 @@
 import pg from 'pg';
+import { IPoolFactory } from '../persistence/pool-factory.interface';
 const { Pool } = pg;
 
 import { IPoolConfig } from './postgres-pool-configuration.interface';
 import { IPool } from './postgres-pool.interface';
 
-export class PoolFactory {
-    static makePool(config: IPoolConfig): IPool {
+export class PoolFactory implements IPoolFactory {
+    makePool(config: IPoolConfig): IPool {
         if (!config.database) {
             throw new Error('Database not set');
         }

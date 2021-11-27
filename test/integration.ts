@@ -23,7 +23,7 @@ const framework = new IntegrationTestFramework();
 
 framework.loadTestConfig(configPath)
     .then(config => testConfig = config)
-    .then(() => pool = PoolFactory.makePool(testConfig.databaseConfig))
+    .then(() => pool = new PoolFactory().makePool(testConfig.databaseConfig))
 
     .then(() => new PersistenceService(pool))
     .then(service => persistenceService = service)

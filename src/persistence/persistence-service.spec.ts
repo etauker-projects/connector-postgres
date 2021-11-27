@@ -5,78 +5,10 @@ import { PersistenceTransaction } from './persistence-transaction';
 import { IPersistenceConfig } from './persistence-configuration.interface';
 import { PersistenceService } from './persistence-service';
 import { IQueryConfig } from './query-configuration.interface';
-import { IPoolFactory } from './pool-factory.interface';
 import { PersistenceTransactionMock } from './persistence-transaction.mock';
 import { PoolFactoryMock } from '../postgres/postgres-pool-factory.mock';
 
 describe('PersistenceService', () => {
-
-    let config: IPersistenceConfig;
-    let factory: IPoolFactory
-    beforeEach(() => {
-        config = {
-            database: 'database',
-            user: 'user',
-            password: 'password',
-            host: 'host',
-            port: 1234,
-        }
-        factory = new PoolFactoryMock();
-    })
-
-    describe('constructor', () => {
-
-        it('should throw exception if database is missing', (done) => {
-            try {
-                config.database = undefined;
-                const service = new PersistenceService(config, factory);
-                done(new Error('Exception should have been thrown'));
-            } catch (error) {
-                assert.equal(error.message, 'Database not set');
-                done();
-            }
-        })
-        it('should throw exception if user is missing', (done) => {
-            try {
-                config.user = undefined;
-                const service = new PersistenceService(config, factory);
-                done(new Error('Exception should have been thrown'));
-            } catch (error) {
-                assert.equal(error.message, 'Database user not set');
-                done();
-            }
-        })
-        it('should throw exception if password is missing', (done) => {
-            try {
-                config.password = undefined;
-                const service = new PersistenceService(config, factory);
-                done(new Error('Exception should have been thrown'));
-            } catch (error) {
-                assert.equal(error.message, 'Database password not set');
-                done();
-            }
-        })
-        it('should throw exception if host is missing', (done) => {
-            try {
-                config.host = undefined;
-                const service = new PersistenceService(config, factory);
-                done(new Error('Exception should have been thrown'));
-            } catch (error) {
-                assert.equal(error.message, 'Database host not set');
-                done();
-            }
-        })
-        it('should throw exception if port is missing', (done) => {
-            try {
-                config.port = undefined;
-                const service = new PersistenceService(config, factory);
-                done(new Error('Exception should have been thrown'));
-            } catch (error) {
-                assert.equal(error.message, 'Database port not set');
-                done();
-            }
-        })
-    })
 
     describe('query', () => {
 
@@ -93,7 +25,8 @@ describe('PersistenceService', () => {
                 port: 1234,
             }
             transaction = PersistenceTransactionMock.getInstance();
-            service = new PersistenceService(config, new PoolFactoryMock());
+            const factory = new PoolFactoryMock();
+            service = new PersistenceService(factory.makePool(config));
             stub = sinon.stub(service, 'transact').returns(transaction);
 
         })
