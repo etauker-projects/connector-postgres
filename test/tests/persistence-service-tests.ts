@@ -18,7 +18,7 @@ const tests = [
         name: 'insert should return correct row count',
         run: async (service: PersistenceService) => {
             const query = INSERT_QUERY;
-            const result = await service.execute(query);
+            const result = await service.insert(query);
             assert.equal(result, 1, 'incorrect inserted');
             return { success: true, message: 'Success' };
         }
@@ -39,7 +39,7 @@ const tests = [
         name: 'insert should fail when unique column is not unique',
         run: async (service: PersistenceService) => {
             try {
-                await service.execute(INSERT_NOT_UNIQUE_QUERY);
+                await service.insert(INSERT_NOT_UNIQUE_QUERY);
                 return { success: false, message: 'Error should have been thrown due to non-unique value' };
             } catch (error: any) {
                 const expected = 'violates unique constraint';
@@ -64,7 +64,7 @@ const tests = [
         name: 'update should return correct row count',
         run: async (service: PersistenceService) => {
             const query = UPDATE_QUERY;
-            const result = await service.execute(query);
+            const result = await service.update(query);
             assert.equal(result, 1, 'incorrect updated');
             return { success: true, message: 'Success' };
         }
@@ -85,7 +85,7 @@ const tests = [
         name: 'delete should return correct row count',
         run: async (service: PersistenceService) => {
             const query = DELETE_QUERY;
-            const result = await service.execute(query);
+            const result = await service.delete(query);
             assert.equal(result, 1, 'incorrect deleted');
             return { success: true, message: 'Success' };
         }
@@ -106,7 +106,7 @@ const tests = [
         name: 'insert should fail when not_null column is null',
         run: async (service: PersistenceService) => {
             try {
-                await service.execute(INSERT_NULL_QUERY);
+                await service.insert(INSERT_NULL_QUERY);
                 return { success: false, message: 'Error should have been thrown due to null value' };
             } catch (error: any) {
                 const expected = 'violates not-null constraint';
