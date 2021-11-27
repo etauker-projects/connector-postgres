@@ -12,7 +12,7 @@ export class PersistenceTransactionMock {
     private inserted = 0;
     private updated = 0;
     private deleted = 0;
-    private results = [];
+    private results: any[] = [];
 
     public continue: SinonStub;
     public commit: SinonStub;
@@ -29,7 +29,7 @@ export class PersistenceTransactionMock {
         this.ready = sinon.stub().resolves();
     }
 
-    private getResult(sql): Promise<IPersistenceResult<any>> {
+    private getResult(sql: string): Promise<IPersistenceResult<any>> {
         if (sql.includes('INSERT')) {
             this.inserted++;
             // TODO: parse SQL and insert
