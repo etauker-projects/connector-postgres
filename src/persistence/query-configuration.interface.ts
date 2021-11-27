@@ -1,4 +1,6 @@
 export interface IQueryConfig {
     commit: boolean;
-    maxStatements: number;
+
+    // multiple statements in single method call not currently supported
+    maxStatements: 1;
 }
