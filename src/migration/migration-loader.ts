@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
-import { IMigration, IChange, IRollback } from './migration.interface';
+import { IMigration, IChange, IRollback } from './model/migration.interface';
 
 export class MigrationLoader {
 

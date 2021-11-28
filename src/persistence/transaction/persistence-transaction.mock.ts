@@ -1,7 +1,7 @@
-import sinon, { SinonStub } from 'sinon';
 import { randomUUID } from 'crypto';
-import { IPersistenceResult } from './persistence-results.interface';
+import sinon, { SinonStub } from 'sinon';
 import { PersistenceTransaction } from './persistence-transaction';
+import { IPersistenceResult } from '../model/persistence-results.interface';
 
 export class PersistenceTransactionMock {
 

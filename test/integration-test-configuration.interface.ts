@@ -1,5 +1,4 @@
-import { IMigrationConfiguration } from '../src/migration/migration-configuration.interface';
-import { IPoolConfig } from '../src/postgres/postgres-pool-configuration.interface';
+import { IMigrationConfiguration, IPoolConfig } from "../src";
 
 export interface IIntegrationTestConfiguration {
     databaseConfig: IPoolConfig;

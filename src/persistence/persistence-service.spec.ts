@@ -1,11 +1,11 @@
 import 'mocha';
 import sinon, { SinonStub } from 'sinon';
 import assert, { fail } from 'assert';
-import { PersistenceTransaction } from './persistence-transaction';
-import { IPersistenceConfig } from './persistence-configuration.interface';
+import { PersistenceTransaction } from './transaction/persistence-transaction';
+import { IPersistenceConfig } from './model/persistence-config.interface';
 import { PersistenceService } from './persistence-service';
-import { PersistenceTransactionMock } from './persistence-transaction.mock';
-import { PoolFactoryMock } from '../postgres/postgres-pool-factory.mock';
+import { PersistenceTransactionMock } from './transaction/persistence-transaction.mock';
+import { PoolFactoryMock } from '../postgres/factory/postgres-pool-factory.mock';
 
 
 describe('PersistenceService', () => {

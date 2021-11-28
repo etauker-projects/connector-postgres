@@ -1,12 +1,12 @@
 import 'mocha';
 import sinon from 'sinon';
 import assert from 'assert';
-import { IPersistenceClient } from './persistence-client.interface';
 import { PersistenceTransaction } from './persistence-transaction';
+import { IPoolClient } from '../../postgres/model/postgres-pool-client.interface';
 
 describe('PersistenceTransaction', () => {
 
-    let client: IPersistenceClient;
+    let client: IPoolClient;
     let mock: {
         query: sinon.SinonStub;
         release: sinon.SinonStub;
@@ -33,7 +33,7 @@ describe('PersistenceTransaction', () => {
                     else return Promise.resolve({ command: args[0] });
                 }),
         };
-        client = mock as any as IPersistenceClient;
+        client = mock as any as IPoolClient;
     })
 
     describe('constructor', () => {

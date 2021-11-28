@@ -1,9 +1,10 @@
 import pg from 'pg';
-import { IPoolFactory } from '../persistence/pool-factory.interface';
 const { Pool } = pg;
 
-import { IPoolConfig } from './postgres-pool-configuration.interface';
-import { IPool } from './postgres-pool.interface';
+import { IPoolFactory } from '../../persistence/model/pool-factory.interface';
+import { IPoolConfig } from '../model/postgres-pool-config.interface';
+import { IPool } from '../model/postgres-pool.interface';
+
 
 export class PoolFactory implements IPoolFactory {
     makePool(config: IPoolConfig): IPool {

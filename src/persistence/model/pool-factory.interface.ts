@@ -1,5 +1,5 @@
-import { IPoolConfig } from '../postgres/postgres-pool-configuration.interface';
-import { IPool } from '../postgres/postgres-pool.interface';
+import { IPoolConfig } from '../../postgres/model/postgres-pool-config.interface';
+import { IPool } from '../../postgres/model/postgres-pool.interface';
 
 export interface IPoolFactory {
 

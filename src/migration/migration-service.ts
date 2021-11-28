@@ -1,8 +1,8 @@
 import url from 'url';
 import path from 'path';
 
-import { IMigrationConfiguration } from './migration-configuration.interface';
-import { IChange, IMigration } from './migration.interface';
+import { IMigrationConfiguration } from './model/migration-config.interface';
+import { IChange, IMigration } from './model/migration.interface';
 import { MigrationLoader } from './migration-loader';
 import { MigrationRepository } from './migration-repository';
 import { PersistenceService } from '../persistence/persistence-service';

@@ -1,10 +1,10 @@
 import pg, { QueryResult } from 'pg';
-import { IPersistenceClient } from './persistence-client.interface';
-import { IPersistenceResult } from './persistence-results.interface';
+import { IPoolClient } from '../../postgres/model/postgres-pool-client.interface';
+import { IPersistenceResult } from '../model/persistence-results.interface';
 
 export class PersistenceTransaction {
 
-    private client: IPersistenceClient;
+    private client: IPoolClient;
     private open: boolean;
     private complete: boolean;
     private stack: Promise<any>;
@@ -12,7 +12,7 @@ export class PersistenceTransaction {
     /**
      * Create a new database transaction.
      */
-    constructor(promise: Promise<IPersistenceClient>) {
+    constructor(promise: Promise<IPoolClient>) {
         this.client = undefined as any;
         this.open = false;
         this.complete = false;

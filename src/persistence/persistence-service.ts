@@ -1,7 +1,7 @@
-import { IPool } from '../postgres/postgres-pool.interface';
-import { IQueryConfig } from './query-configuration.interface';
-import { PersistenceTransaction } from './persistence-transaction';
-import { IPersistenceResult } from './persistence-results.interface';
+import { IPool } from '../postgres/model/postgres-pool.interface';
+import { IQueryConfig } from './model/query-config.interface';
+import { PersistenceTransaction } from './transaction/persistence-transaction';
+import { IPersistenceResult } from './model/persistence-results.interface';
 
 export class PersistenceService {
 

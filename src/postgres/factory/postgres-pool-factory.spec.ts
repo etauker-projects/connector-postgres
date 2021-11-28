@@ -1,9 +1,9 @@
 import 'mocha';
-import sinon, { SinonStub } from 'sinon';
 import assert from 'assert';
-import { IPersistenceConfig } from '../persistence/persistence-configuration.interface';
-import { IPoolFactory } from '../persistence/pool-factory.interface';
+
 import { PoolFactory } from './postgres-pool-factory';
+import { IPoolFactory } from '../../persistence/model/pool-factory.interface';
+import { IPersistenceConfig } from '../../persistence/model/persistence-config.interface';
 
 describe('PoolFactory', () => {
 

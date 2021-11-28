@@ -1,7 +1,7 @@
-import { IPersistenceResult } from '../persistence/persistence-results.interface';
+import { IPersistenceResult } from '../persistence/model/persistence-results.interface';
 import { PersistenceService } from '../persistence/persistence-service';
-import { PersistenceTransaction } from '../persistence/persistence-transaction';
-import { IMigration, IMigrationItem, IMigrationItemStatus } from './migration.interface';
+import { PersistenceTransaction } from '../persistence/transaction/persistence-transaction';
+import { IMigration, IMigrationItem, IMigrationItemStatus } from './model/migration.interface';
 
 export class MigrationRepository {
 

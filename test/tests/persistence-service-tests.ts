@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { PersistenceService } from '../../src/persistence/persistence-service';
+import { PersistenceService } from '../../src';
 
 const tests = [
     {

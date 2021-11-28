@@ -1,11 +1,8 @@
 import url from 'url';
 import path from 'path';
-import { PersistenceService } from '../src/persistence/persistence-service';
 import { IntegrationTestFramework } from './integration-test-framework';
-import { MigrationService } from '../src/migration/migration-service';
 import { IIntegrationTestConfiguration } from './integration-test-configuration.interface';
-import { PoolFactory } from '../src/postgres/postgres-pool-factory';
-import { IPool } from '../src/postgres/postgres-pool.interface';
+import { IPool, MigrationService, PersistenceService, PoolFactory } from '../src';
 
 let pool: IPool;
 let testConfig: IIntegrationTestConfiguration;

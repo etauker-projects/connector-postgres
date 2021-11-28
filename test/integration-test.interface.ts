@@ -1,4 +1,4 @@
-import { PersistenceService } from '../src/persistence/persistence-service';
+import { PersistenceService } from '../src';
 import { IIntegrationTestResult } from './integration-test-result.interface';
 
 export interface IIntegrationTest {
