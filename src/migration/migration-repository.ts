@@ -1,14 +1,14 @@
 import { IPersistenceResult } from '../persistence/model/persistence-results.interface';
-import { PersistenceService } from '../persistence/persistence-service';
+import { PersistenceConnector } from '../persistence/persistence-connector';
 import { PersistenceTransaction } from '../persistence/transaction/persistence-transaction';
-import { IMigration, IMigrationItem, IMigrationItemStatus } from './model/migration.interface';
+import { IMigration, IMigrationItem, IMigrationItemStatus } from './migration.interface';
 
 export class MigrationRepository {
 
-    private persistenceService: PersistenceService;
+    private connector: PersistenceConnector;
 
-    constructor(persistenceService: PersistenceService) {
-        this.persistenceService = persistenceService;
+    constructor(connector: PersistenceConnector) {
+        this.connector = connector;
     }
 
     //------------------------------
@@ -16,7 +16,7 @@ export class MigrationRepository {
     //------------------------------
     public saveMultipleMetadataInNewTransaction(migrations: IMigration[]): Promise<void> {
         return new Promise(async (resolve, reject) => {
-            const transaction = this.persistenceService.transact();
+            const transaction = this.connector.transact();
             try {
                 const promises = migrations.map(migration => this.saveSingleMetadata(transaction, migration));
                 await Promise.all(promises);
@@ -31,7 +31,7 @@ export class MigrationRepository {
 
     public saveSingleMetadataInNewTransaction(migration: IMigration): Promise<void> {
         return new Promise(async (resolve, reject) => {
-            const transaction = this.persistenceService.transact();
+            const transaction = this.connector.transact();
             try {
                 await this.saveSingleMetadata(transaction, migration);
                 await transaction.end(true);

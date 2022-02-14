@@ -1,45 +1,45 @@
 import assert from 'assert';
-import { PersistenceService } from '../../src';
+import { PersistenceConnector } from '../../src';
 
 const tests = [
     {
-        suite: 'Persistence Service',
+        suite: 'Persistence Connector',
         name: 'select should return correct results',
-        run: async (service: PersistenceService) => {
+        run: async (connector: PersistenceConnector) => {
             const query = SELECT_QUERY;
-            const result = await service.select(query);
+            const result = await connector.select(query);
             assert.equal(result.length, 0, 'incorrect result count');
             assert.deepStrictEqual(result, [], 'incorrect results');
             return { success: true, message: 'Success' };
         }
     },
     {
-        suite: 'Persistence Service',
+        suite: 'Persistence Connector',
         name: 'insert should return correct row count',
-        run: async (service: PersistenceService) => {
+        run: async (connector: PersistenceConnector) => {
             const query = INSERT_QUERY;
-            const result = await service.insert(query);
+            const result = await connector.insert(query);
             assert.equal(result, 1, 'incorrect inserted');
             return { success: true, message: 'Success' };
         }
     },
     {
-        suite: 'Persistence Service',
+        suite: 'Persistence Connector',
         name: 'select should return correct results after insert',
-        run: async (service: PersistenceService) => {
+        run: async (connector: PersistenceConnector) => {
             const query = SELECT_QUERY;
-            const result = await service.select(query);
+            const result = await connector.select(query);
             assert.equal(result.length, 1, 'incorrect result count');
             assert.deepStrictEqual(result, [INSERTED], 'incorrect results');
             return { success: true, message: 'Success' };
         }
     },
     {
-        suite: 'Persistence Service',
+        suite: 'Persistence Connector',
         name: 'insert should fail when unique column is not unique',
-        run: async (service: PersistenceService) => {
+        run: async (connector: PersistenceConnector) => {
             try {
-                await service.insert(INSERT_NOT_UNIQUE_QUERY);
+                await connector.insert(INSERT_NOT_UNIQUE_QUERY);
                 return { success: false, message: 'Error should have been thrown due to non-unique value' };
             } catch (error: any) {
                 const expected = 'violates unique constraint';
@@ -49,64 +49,64 @@ const tests = [
         }
     },
     {
-        suite: 'Persistence Service',
+        suite: 'Persistence Connector',
         name: 'select should return correct results after insert of not unique value',
-        run: async (service: PersistenceService) => {
+        run: async (connector: PersistenceConnector) => {
             const query = SELECT_QUERY;
-            const result = await service.select(query);
+            const result = await connector.select(query);
             assert.equal(result.length, 1, 'incorrect result count');
             assert.deepStrictEqual(result, [INSERTED], 'incorrect results');
             return { success: true, message: 'Success' };
         }
     },
     {
-        suite: 'Persistence Service',
+        suite: 'Persistence Connector',
         name: 'update should return correct row count',
-        run: async (service: PersistenceService) => {
+        run: async (connector: PersistenceConnector) => {
             const query = UPDATE_QUERY;
-            const result = await service.update(query);
+            const result = await connector.update(query);
             assert.equal(result, 1, 'incorrect updated');
             return { success: true, message: 'Success' };
         }
     },
     {
-        suite: 'Persistence Service',
+        suite: 'Persistence Connector',
         name: 'select should return correct results after update',
-        run: async (service: PersistenceService) => {
+        run: async (connector: PersistenceConnector) => {
             const query = SELECT_QUERY;
-            const result = await service.select(query);
+            const result = await connector.select(query);
             assert.equal(result.length, 1, 'incorrect result count');
             assert.deepStrictEqual(result, [UPDATED], 'incorrect results');
             return { success: true, message: 'Success' };
         }
     },
     {
-        suite: 'Persistence Service',
+        suite: 'Persistence Connector',
         name: 'delete should return correct row count',
-        run: async (service: PersistenceService) => {
+        run: async (connector: PersistenceConnector) => {
             const query = DELETE_QUERY;
-            const result = await service.delete(query);
+            const result = await connector.delete(query);
             assert.equal(result, 1, 'incorrect deleted');
             return { success: true, message: 'Success' };
         }
     },
     {
-        suite: 'Persistence Service',
+        suite: 'Persistence Connector',
         name: 'select should return correct results after delete',
-        run: async (service: PersistenceService) => {
+        run: async (connector: PersistenceConnector) => {
             const query = SELECT_QUERY;
-            const result = await service.select(query);
+            const result = await connector.select(query);
             assert.equal(result.length, 0, 'incorrect result count');
             assert.deepStrictEqual(result, [], 'incorrect results');
             return { success: true, message: 'Success' };
         }
     },
     {
-        suite: 'Persistence Service',
+        suite: 'Persistence Connector',
         name: 'insert should fail when not_null column is null',
-        run: async (service: PersistenceService) => {
+        run: async (connector: PersistenceConnector) => {
             try {
-                await service.insert(INSERT_NULL_QUERY);
+                await connector.insert(INSERT_NULL_QUERY);
                 return { success: false, message: 'Error should have been thrown due to null value' };
             } catch (error: any) {
                 const expected = 'violates not-null constraint';
@@ -116,11 +116,11 @@ const tests = [
         }
     },
     {
-        suite: 'Persistence Service',
+        suite: 'Persistence Connector',
         name: 'select should return correct results after null insert',
-        run: async (service: PersistenceService) => {
+        run: async (connector: PersistenceConnector) => {
             const query = SELECT_QUERY;
-            const result = await service.select(query);
+            const result = await connector.select(query);
             assert.equal(result.length, 0, 'incorrect result count');
             assert.deepStrictEqual(result, [], 'incorrect results');
             return { success: true, message: 'Success' };

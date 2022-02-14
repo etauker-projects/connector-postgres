@@ -18,7 +18,7 @@ export class PersistenceTransactionMock {
     public commit: SinonStub;
     public rollback: SinonStub;
     public end: SinonStub;
-    public ready: SinonStub;    
+    public ready: SinonStub;
 
     constructor() {
         this.results.push([{ id: randomUUID(), name: 'First' }]);

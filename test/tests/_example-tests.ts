@@ -1,10 +1,10 @@
-import { PersistenceService } from "../../src";
+import { PersistenceConnector } from "../../src";
 
 const tests = [
     {
         suite: 'suite 1',
         name: 'test 1',
-        run: (service: PersistenceService) => (Promise.resolve({
+        run: (connector: PersistenceConnector) => (Promise.resolve({
             success: true,
             message: 'Executed successfully'
         }))
@@ -12,7 +12,7 @@ const tests = [
     {
         suite: 'suite 2',
         name: 'test 2',
-        run: (service: PersistenceService) => (Promise.resolve({
+        run: (connector: PersistenceConnector) => (Promise.resolve({
             success: false,
             message: 'Unsuccessful execution'
         }))
@@ -20,12 +20,12 @@ const tests = [
     {
         suite: 'suite 1',
         name: 'test 2',
-        run: (service: PersistenceService) => (Promise.reject('Rejected'))
+        run: (connector: PersistenceConnector) => (Promise.reject('Rejected'))
     },
     {
         suite: 'suite 1',
         name: 'test 3',
-        run: (service: PersistenceService) => (Promise.reject(new Error('Error thrown')))
+        run: (connector: PersistenceConnector) => (Promise.reject(new Error('Error thrown')))
     }
 ];
 

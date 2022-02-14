@@ -5,14 +5,14 @@ import { IIntegrationTest } from './integration-test.interface';
 import { IIntegrationTestSummary } from './integration-test-summary.interface';
 import { IIntegrationTestConfiguration } from './integration-test-configuration.interface';
 import { IIntegrationTestModule } from './integration-test-module.interface';
-import { PersistenceService } from '../src/persistence/persistence-service';
+import { PersistenceConnector } from '../src/persistence/persistence-connector';
 import { MigrationService } from '../src/migration/migration-service';
 
 
 export class IntegrationTestFramework {
 
-    public testConnection(persistenceService: PersistenceService): Promise<boolean> {
-        return this.getPostgresVersion(persistenceService)
+    public testConnection(connector: PersistenceConnector): Promise<boolean> {
+        return this.getPostgresVersion(connector)
             .then(version => {
                 console.log('');
                 console.log('Integration tests running against postgres server:');
@@ -31,8 +31,8 @@ export class IntegrationTestFramework {
         ;
     }
     
-    public getPostgresVersion(persistenceService: PersistenceService): Promise<string> {
-        return persistenceService
+    public getPostgresVersion(connector: PersistenceConnector): Promise<string> {
+        return connector
             .select<{ version: string }>('SELECT version();')
             .then(res => res[0].version)
         ;
@@ -68,14 +68,14 @@ export class IntegrationTestFramework {
             })
     }
 
-    public runSequentialTests(persistenceService: PersistenceService, tests: IIntegrationTest[]): Promise<IIntegrationTestSummary[]> {
+    public runSequentialTests(connector: PersistenceConnector, tests: IIntegrationTest[]): Promise<IIntegrationTestSummary[]> {
         const results: IIntegrationTestSummary[] = [];
         const run = (prom: Promise<void>, i: number): Promise<void> => {
             if (i >= tests.length) {
                 return prom;
             }
             return this
-                .executeTest(persistenceService, tests[i])
+                .executeTest(connector, tests[i])
                 .then(summary => {
                     results.push(summary);
                     return run(Promise.resolve(), i+1);
@@ -86,11 +86,11 @@ export class IntegrationTestFramework {
     }
     
     public executeTest(
-        persistenceService: PersistenceService,
+        connector: PersistenceConnector,
         test: IIntegrationTest
     ): Promise<IIntegrationTestSummary> {
         return test
-            .run(persistenceService)
+            .run(connector)
             .then(result => {
                 const status = result.success ? 'SUCCESS' : 'FAILURE';
                 console.log(`[${status}] ${test.suite} - ${test.name}`);

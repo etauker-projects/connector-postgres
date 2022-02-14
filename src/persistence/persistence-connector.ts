@@ -3,7 +3,7 @@ import { IQueryConfig } from './model/query-config.interface';
 import { PersistenceTransaction } from './transaction/persistence-transaction';
 import { IPersistenceResult } from './model/persistence-results.interface';
 
-export class PersistenceService {
+export class PersistenceConnector {
 
     private pool: IPool;
     private config: IQueryConfig = {

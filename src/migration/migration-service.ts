@@ -2,28 +2,28 @@ import url from 'url';
 import path from 'path';
 
 import { IMigrationConfiguration } from './model/migration-config.interface';
-import { IChange, IMigration } from './model/migration.interface';
+import { IChange, IMigration } from './migration.interface';
 import { MigrationLoader } from './migration-loader';
 import { MigrationRepository } from './migration-repository';
-import { PersistenceService } from '../persistence/persistence-service';
+import { PersistenceConnector } from '../persistence/persistence-connector';
 
 export class MigrationService {
 
     private internalMigrationRoot: string;
     private config: IMigrationConfiguration;
-    private persistenceService: PersistenceService;
+    private connector: PersistenceConnector;
     private migrationRepository: MigrationRepository;
 
     constructor(
         config: Partial<IMigrationConfiguration>,
-        persistenceService: PersistenceService,
+        connector: PersistenceConnector,
     ) {
         const currentFilename = url.fileURLToPath(import.meta.url);
         const currentDirname = path.dirname(currentFilename);
         this.internalMigrationRoot = path.resolve(currentDirname, '..', '..', 'migrations', 'internal');
         this.config = { debug: false, ...config };
-        this.persistenceService = persistenceService;
-        this.migrationRepository = new MigrationRepository(persistenceService);
+        this.connector = connector;
+        this.migrationRepository = new MigrationRepository(connector);
     }
 
     /**
@@ -115,7 +115,7 @@ export class MigrationService {
      * the status of the change inside the migration database table.
      */
     public executeChange(migration: IMigration, saveMetadata = true): Promise<void> {
-        const transaction = this.persistenceService.transact();
+        const transaction = this.connector.transact();
 
         return (saveMetadata ? this.migrationRepository.saveSingleMetadataInNewTransaction(migration): Promise.resolve())
             .then(() => transaction.continue(migration?.change?.script))
@@ -143,7 +143,7 @@ export class MigrationService {
      * the status of the rollback inside the migration database table.
      */
     public executeRollback(migration: IMigration, saveMetadata = true): Promise<void> {
-        const transaction = this.persistenceService.transact();
+        const transaction = this.connector.transact();
 
         return (saveMetadata ? this.migrationRepository.saveSingleMetadataInNewTransaction(migration): Promise.resolve())
             .then(() => transaction.continue(migration?.rollback?.script))
