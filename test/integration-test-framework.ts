@@ -118,8 +118,8 @@ export class IntegrationTestFramework {
         return Promise.resolve({
             databaseConfig: {
                 database: 'local_01',
-                user: 'development_admin',
-                password: 'admin',
+                user: 'security_admin', // TODO: change to "development_admin"
+                password: 'admin',      // TODO: get from env or env file
                 host: 'localhost',
                 port: 5432,
                 ssl: false,
