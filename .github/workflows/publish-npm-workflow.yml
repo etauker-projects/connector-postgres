@@ -53,6 +53,9 @@ jobs:
       - name: Print environment
         run: printenv
 
+      - name: Publish check config
+        run: npm config list -l
+
       - name: Publish package
         run: npm publish
         env:
