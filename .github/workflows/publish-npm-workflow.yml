@@ -1,4 +1,4 @@
-name: Pull Request
+name: Publish NPM Package
 
 on:
   pull_request:
