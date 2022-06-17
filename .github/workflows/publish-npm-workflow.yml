@@ -32,8 +32,8 @@ jobs:
 
       - name: Install dependencies
         run: npm  ci --ignore-scripts
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # env:
+        #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Audit dependencies
         run: npm audit
@@ -49,5 +49,5 @@ jobs:
 
       - name: Publish package
         run: npm publish --registry ${{ env.NPM_REGISTRY_URL }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # env:
+        #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
