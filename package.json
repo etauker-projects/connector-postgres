@@ -30,7 +30,7 @@
     "name": "Tautvydas Kersulis",
     "email": "etauker@gmail.com"
   },
-  "license": "UNLICENCED",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/etauker-projects/connector-postgres/issues"
   },
