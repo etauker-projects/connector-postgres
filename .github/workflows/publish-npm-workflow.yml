@@ -49,7 +49,10 @@ jobs:
       - name: Print .npmrc
         run: cat /home/runner/work/_temp/.npmrc
 
+      - name: Print token
+        run: echo  "${{ secrets.NPM_TOKEN }}"
+
       - name: Publish package
         run: npm publish --registry ${{ env.NPM_REGISTRY_URL }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # env:
+        #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
