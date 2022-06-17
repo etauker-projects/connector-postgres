@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/etauker/connector-postgres.git"
+    "url": "git+https://github.com/etauker-projects/connector-postgres.git"
   },
   "keywords": [
     "etauker",
@@ -32,9 +32,9 @@
   },
   "license": "UNLICENCED",
   "bugs": {
-    "url": "https://github.com/etauker/connector-postgres/issues"
+    "url": "https://github.com/etauker-projects/connector-postgres/issues"
   },
-  "homepage": "https://github.com/etauker/connector-postgres#readme",
+  "homepage": "https://github.com/etauker-projects/connector-postgres#readme",
   "dependencies": {
     "mocha": "^9.2.2",
     "pg": "^8.6.0",
