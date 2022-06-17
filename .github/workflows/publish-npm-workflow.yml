@@ -9,7 +9,7 @@ on:
 env:
   NPM_REGISTRY_URL: 'https://registry.npmjs.org'
   # NPM_REGISTRY_URL: 'https://npm.pkg.github.com'
-  NODE_VERSION: 16
+  NVMRC_FILE_PATH: './config/.nvmrc'
 
 jobs:
 
@@ -24,10 +24,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version-file: './config/.nvmrc'
-          always-auth: true
-          scope: etauker
-          # node-version: ${{ env.NODE_VERSION }}
+          node-version-file: ${{ env.NVMRC_FILE_PATH }}
           registry-url: ${{ env.NPM_REGISTRY_URL }}
 
       - name: Install dependencies
@@ -47,16 +44,7 @@ jobs:
       - name: Build code
         run: npm run build
 
-      - name: Print .npmrc
-        run: cat /home/runner/work/_temp/.npmrc
-
-      - name: Print environment
-        run: printenv
-
-      - name: Publish check config
-        run: npm config list -l
-
       - name: Publish package
         run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # env:
+        #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
