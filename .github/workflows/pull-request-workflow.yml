@@ -1,0 +1,101 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+jobs:
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        # with:
+        #   fetch-depth: 0
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with.node-version: '16.x'
+
+      # - run: npm publish
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+
+      # - name: Save .npmrc
+      #   run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Install dependencies
+        run: npm  ci --ignore-scripts
+        working-directory: ./service
+        env.NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # - name: Run install scripts
+      #   run: npm run rebuild
+      #   working-directory: ./service
+
+      - name: Lint code
+        run: npm run lint
+        working-directory: ./service
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Save .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./service
+
+      - name: Test code
+        run: npm run test
+        working-directory: ./service
+
+  audit:
+    name: Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Audit dependencies
+        run: npm audit
+        working-directory: ./service
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Save .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./service
+
+      - name: Build code
+        run: npm run build
+        working-directory: ./service
