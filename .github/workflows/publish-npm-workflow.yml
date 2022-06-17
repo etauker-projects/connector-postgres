@@ -50,12 +50,10 @@ jobs:
       - name: Print .npmrc
         run: cat /home/runner/work/_temp/.npmrc
 
-      - name: Print token
-        run: echo  "${{ env.NODE_AUTH_TOKEN }}"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Print environment
+        run: printenv
 
       - name: Publish package
-        run: npm publish --help
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
