@@ -11,7 +11,7 @@ env:
 jobs:
 
   publish:
-    name: Prepare and Publish
+    name: Publish
     runs-on: ubuntu-latest
 
     steps:
