@@ -8,7 +8,6 @@ on:
 
 env:
   NPM_REGISTRY_URL: 'https://registry.npmjs.org'
-  # NPM_REGISTRY_URL: 'https://npm.pkg.github.com'
   NVMRC_FILE_PATH: './config/.nvmrc'
 
 jobs:
@@ -46,5 +45,5 @@ jobs:
 
       - name: Publish package
         run: npm publish
-        # env:
-        #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
