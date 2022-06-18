@@ -63,14 +63,16 @@ const [ buyerRowsUpdated, sellerRowsUpdated ] = await Promise.all([
 ]);
 
 await transaction.commit();
-return `${ buyerRowsUpdated + sellerRowsUpdated } rows updated`;
+
+console.log(`${ buyerRowsUpdated + sellerRowsUpdated } rows updated`);
+// output: 2 rows updated
 ```
 
 ### Database migrations
 The library also provides functionality for executing database migrations.  
 > **Note:** to run database migrations the connector needs to create some tables containing information about the state of migration execution. These tables currently make use of a certain database function which must first be created manually. This function can be found in [scripts/create_type_if_not_exists.sql](./scripts/create_type_if_not_exists.sql).
 
-A directory containing all required migrations `{migration-root}` must first be created with the following structure. The migration directories can be named anything but should be prefixed with a number to ensure deterministic order. The files inside the migration directory must be names `change.sql` and `rollback.sql`.
+A `{migration-root}` directory containing all required migrations must first be created with the following structure. The migration directories can be named anything but should be prefixed with a number to ensure deterministic order. The files inside the migration directory must be names `change.sql` and `rollback.sql`.
 ```
 {migration-root}
     |- 01.{first-migration}
@@ -83,8 +85,8 @@ A directory containing all required migrations `{migration-root}` must first be 
 ```
 
 Change and rollback files must contain sql statements to be executed. 
-The change file is executed during normal circumstances. 
-If one of the migrations fails, the rollback file is executed for all previous migrations in that set. 
+The `change` file is executed during normal circumstances. 
+If one of the migrations fails, the `rollback` file is executed for all previous migrations in that set. 
 ```sql
 -- {migration-root}/01.create-car-table/change.sql
 CREATE TABLE IF NOT EXISTS cars (
@@ -98,7 +100,7 @@ CREATE TABLE IF NOT EXISTS cars (
 DROP TABLE IF EXISTS cars CASCADE;
 ```
 
-The triggering of the migrations from code can be dine like this
+The triggering of the migrations from code can be done like this
 ```ts
 const migrationRoot = 'absolute/path/to/migration-root';
 const persistenceConfig = getPersistenceConfig();
