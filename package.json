@@ -1,6 +1,6 @@
 {
   "name": "@etauker/connector-postgres",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Node postgres connector for etauker projects. Simplifies postgres database connections and allows running of database migrations from node applications.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
