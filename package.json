@@ -1,7 +1,7 @@
 {
   "name": "@etauker/connector-postgres",
-  "version": "2.0.2",
-  "description": "Node postgres connector",
+  "version": "3.0.0",
+  "description": "Node postgres connector for etauker projects. Simplifies postgres database connections and allows running of database migrations from node applications.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "module": "esm",
@@ -10,36 +10,16 @@
     "node": "^16.8.0"
   },
   "scripts": {
-    "prelint": "",
     "lint": "echo '--- [CONNECTOR POSTGRES - WARNING] lint script not defined'",
-    "postlint": "",
-    "preinstall": "",
-    "install": "",
-    "postinstall": "",
     "prebuild": "npx rimraf dist",
     "build": "tsc --project ./config/tsconfig.json",
-    "postbuild": "",
-    "pretest": "",
     "test": "TS_NODE_PROJECT='./config/tsconfig.json' mocha --config ./config/.mocharc.json './src/**/*.spec.ts'",
-    "preintegration": "",
     "integration": "TS_NODE_PROJECT='./config/tsconfig.json' node --loader ts-node/esm --es-module-specifier-resolution=node test/integration.ts",
-    "posttest": "",
-    "prestart": "",
-    "start": "TS_NODE_PROJECT='./config/tsconfig.json' node --loader ts-node/esm --es-module-specifier-resolution=node src/index.ts",
-    "poststart": "",
-    "predeploy:patch": "npm run lint && npm install && npm run build && npm run test && npm version patch",
-    "deploy:patch": "npm publish",
-    "postdeploy:patch": "git push --follow-tags",
-    "predeploy:minor": "npm run lint && npm install && npm run build && npm run test && npm version minor",
-    "deploy:minor": "npm publish",
-    "postdeploy:minor": "git push --follow-tags",
-    "predeploy:major": "npm run lint && npm install && npm run build && npm run test && npm version major",
-    "deploy:major": "npm publish",
-    "postdeploy:major": "git push --follow-tags"
+    "start": "TS_NODE_PROJECT='./config/tsconfig.json' node --loader ts-node/esm --es-module-specifier-resolution=node src/index.ts"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/etauker/connector-postgres.git"
+    "url": "git+https://github.com/etauker-projects/connector-postgres.git"
   },
   "keywords": [
     "etauker",
@@ -50,11 +30,11 @@
     "name": "Tautvydas Kersulis",
     "email": "etauker@gmail.com"
   },
-  "license": "UNLICENCED",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/etauker/connector-postgres/issues"
+    "url": "https://github.com/etauker-projects/connector-postgres/issues"
   },
-  "homepage": "https://github.com/etauker/connector-postgres#readme",
+  "homepage": "https://github.com/etauker-projects/connector-postgres#readme",
   "dependencies": {
     "mocha": "^9.2.2",
     "pg": "^8.6.0",
