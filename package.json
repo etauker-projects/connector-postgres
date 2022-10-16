@@ -14,7 +14,7 @@
     "prebuild": "npx rimraf dist",
     "build": "tsc --project ./config/tsconfig.json",
     "test": "TS_NODE_PROJECT='./config/tsconfig.json' mocha --config ./config/.mocharc.json './src/**/*.spec.ts'",
-    "integration": "TS_NODE_PROJECT='./config/tsconfig.json' node --loader ts-node/esm --es-module-specifier-resolution=node test/integration.ts",
+    "test.integration": "TS_NODE_PROJECT='./config/tsconfig.json' node --loader ts-node/esm --es-module-specifier-resolution=node test/integration.ts",
     "start": "TS_NODE_PROJECT='./config/tsconfig.json' node --loader ts-node/esm --es-module-specifier-resolution=node src/index.ts"
   },
   "repository": {

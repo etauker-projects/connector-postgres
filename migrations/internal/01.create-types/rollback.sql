@@ -1,3 +1,3 @@
-DROP TYPE IF EXISTS public.failure_action CASCADE;
-DROP TYPE IF EXISTS public.migration_status CASCADE;
-DROP TYPE IF EXISTS public.action_type CASCADE;
+DROP TYPE IF EXISTS failure_action CASCADE;
+DROP TYPE IF EXISTS migration_status CASCADE;
+DROP TYPE IF EXISTS action_type CASCADE;
