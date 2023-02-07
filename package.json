@@ -1,20 +1,17 @@
 {
   "name": "@etauker/connector-postgres",
-  "version": "3.0.1",
+  "version": "4.0.0",
   "description": "Node postgres connector for etauker projects. Simplifies postgres database connections and allows running of database migrations from node applications.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "module": "esm",
   "type": "module",
-  "engines": {
-    "node": "^16.8.0"
-  },
   "scripts": {
     "lint": "echo '--- [CONNECTOR POSTGRES - WARNING] lint script not defined'",
     "prebuild": "npx rimraf dist",
     "build": "tsc --project ./config/tsconfig.json",
     "test": "TS_NODE_PROJECT='./config/tsconfig.json' mocha --config ./config/.mocharc.json './src/**/*.spec.ts'",
-    "integration": "TS_NODE_PROJECT='./config/tsconfig.json' node --loader ts-node/esm --es-module-specifier-resolution=node test/integration.ts",
+    "test.integration": "TS_NODE_PROJECT='./config/tsconfig.json' node --loader ts-node/esm --es-module-specifier-resolution=node test/integration.ts",
     "start": "TS_NODE_PROJECT='./config/tsconfig.json' node --loader ts-node/esm --es-module-specifier-resolution=node src/index.ts"
   },
   "repository": {
@@ -49,6 +46,6 @@
     "@types/pg-pool": "^2.0.3",
     "@types/sinon": "^10.0.6",
     "rimraf": "^3.0.2",
-    "ts-node": "^10.4.0"
+    "ts-node": "^10.9.1"
   }
 }

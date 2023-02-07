@@ -112,3 +112,15 @@ const service = new MigrationService(migrationConfig, connector);
 await service.setup();
 await service.loadAndExecuteChanges(migrationRoot);
 ```
+
+## Changelog
+
+### Version 4.0.0
+Added
+- setup migration script to create helper functions
+
+Removed 
+- dependence on pre-existing helper functions
+
+Changed 
+- migrations and code logic to use helper functions in the provided schema

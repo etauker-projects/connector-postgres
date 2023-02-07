@@ -44,7 +44,7 @@ export class MigrationRepository {
     }
 
     public getMigrationIdByName(transaction: PersistenceTransaction, migrationName: string): Promise<string> {
-        const query = `SELECT id FROM public.migration WHERE name = '${ migrationName }';`;
+        const query = `SELECT id FROM migration WHERE name = '${ migrationName }';`;
         return transaction.continue(query).then(res => {
             return (res as IPersistenceResult<{ id: string }>).results[0].id;
         })
@@ -54,7 +54,7 @@ export class MigrationRepository {
         const transact = transaction.continue.bind(transaction);
 
         try {
-            const query = `SELECT * FROM public.migration WHERE name = '${migration.name}';`;
+            const query = `SELECT * FROM migration WHERE name = '${migration.name}';`;
             const saved = (await transact(query)).results[0] as IMigration;
 
             if (saved) {
@@ -75,14 +75,14 @@ export class MigrationRepository {
     public updateChangeStatus(transaction: PersistenceTransaction, migrationId: string, success: boolean): Promise<void> {
         const status: IMigrationItemStatus = success ? 'SUCCESS' : 'FAILURE';
         const executionTimestamp = success ? ', executed_at = now()' : '';
-        const query = `UPDATE public.change SET status = '${ status }'${ executionTimestamp } WHERE migration_id = '${ migrationId }';`;
+        const query = `UPDATE change SET status = '${ status }'${ executionTimestamp } WHERE migration_id = '${ migrationId }';`;
         return transaction.continue(query).then();
     }
 
     public updateRollbackStatus(transaction: PersistenceTransaction, migrationId: string, success: boolean): Promise<void> {
         const status: IMigrationItemStatus = success ? 'SUCCESS' : 'FAILURE';
         const executionTimestamp = success ? ', executed_at = now()' : '';
-        const query = `UPDATE public.rollback SET status = '${ status }'${ executionTimestamp } WHERE migration_id = '${ migrationId }';`;
+        const query = `UPDATE rollback SET status = '${ status }'${ executionTimestamp } WHERE migration_id = '${ migrationId }';`;
         return transaction.continue(query).then();
     }
 
@@ -90,22 +90,22 @@ export class MigrationRepository {
     // Private methods
     //------------------------------
     private insertMigration(id: string, name: string, transact: Function) {
-        const query = `INSERT INTO public.migration (id, name) VALUES ('${id}', '${name}');`;
+        const query = `INSERT INTO migration (id, name) VALUES ('${id}', '${name}');`;
         return transact(query);
     }
 
     private insertChange(id: string, hash: string, status: IMigrationItemStatus, transact: Function, executedAt: string = 'null') {
-        const query = `INSERT INTO public.change (migration_id, hash, status, executed_at) VALUES ('${id}', '${hash}', '${status}', ${executedAt});`;
+        const query = `INSERT INTO change (migration_id, hash, status, executed_at) VALUES ('${id}', '${hash}', '${status}', ${executedAt});`;
         return transact(query);
     }
 
     private insertRollback(id: string, hash: string, status: IMigrationItemStatus, transact: Function, executedAt: string = 'null') {
-        const query = `INSERT INTO public.rollback (migration_id, hash, status, executed_at) VALUES ('${id}', '${hash}', '${status}', ${executedAt});`;
+        const query = `INSERT INTO rollback (migration_id, hash, status, executed_at) VALUES ('${id}', '${hash}', '${status}', ${executedAt});`;
         return transact(query);
     }
 
     private async verifyChangeIntegrity(saved: IMigration, loaded: IMigration, transact: Function) {
-        const changeQuery = `SELECT * FROM public.change WHERE migration_id = '${saved.id}';`;
+        const changeQuery = `SELECT * FROM change WHERE migration_id = '${saved.id}';`;
         let changeEntry = (await transact(changeQuery)).results[0] as IMigrationItem<'CHANGE'>;
 
         if (!changeEntry) {
@@ -119,7 +119,7 @@ export class MigrationRepository {
     }
 
     private async verifyRollbackIntegrity(saved: IMigration, loaded: IMigration, transact: Function) {
-        const rollbackQuery = `SELECT * FROM public.rollback WHERE migration_id = '${saved.id}';`;
+        const rollbackQuery = `SELECT * FROM rollback WHERE migration_id = '${saved.id}';`;
         let rollbackEntry = (await transact(rollbackQuery)).results[0] as IMigrationItem<'ROLLBACK'>;
 
         if (!rollbackEntry) {
