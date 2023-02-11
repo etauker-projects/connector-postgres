@@ -29,6 +29,13 @@ export class PersistenceTransaction {
     }
 
     /**
+     * Waits until all queued statements are completed and returns true if the transaction is not closed.
+     */
+    public isOpen (): Promise<boolean> {
+        return this.stack.then(() => this.open);
+    }
+
+    /**
      * Executes an SQL statement as part of the current transaction.
      * Does not close the connection to allow multiple database queries in a single transaction.
      * Ensure to call 'end' method after all SQL statements are completed.
