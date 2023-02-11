@@ -95,7 +95,18 @@ export class PersistenceTransaction {
     }
 
     /**
+     * Closes the connection if it is open.
+     */
+    public async closeIfOpen(commit: boolean): Promise<void> {
+        if (await this.isOpen()) {
+            await this.ready();
+            return this.end(commit);
+        }
+    }
+
+    /**
      * Check for inconsistent state done automatically before each database transaction.
+     * @deprecated will be made private in the future, isOpen() should be used instead.
      */
     public ready(): Promise<void> {
         return this.stack.then(() => {
