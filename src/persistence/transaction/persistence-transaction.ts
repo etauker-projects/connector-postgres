@@ -17,14 +17,14 @@ export class PersistenceTransaction {
         this.open = false;
         this.complete = false;
         this.stack = promise
-            .then(client => {
+            .then(async client => {
                 this.client = client;
-                return this.client.query('BEGIN');
+                await this.client.query('BEGIN');
+                this.open = true;
             })
-            .then(() => this.open = true)
             .catch(error => {
-                console.error(error);
                 this.open = false;
+                throw error;
             });
     }
 
@@ -132,7 +132,6 @@ export class PersistenceTransaction {
         } else if (dataDefinitionCommand.includes(input.command)) {
             return this.getDefaultResult();
         } else {
-            console.warn(`Command '${input.command}' not fully supported`);
             return this.getDefaultResult();
         }
     }
