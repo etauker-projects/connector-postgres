@@ -116,7 +116,7 @@ export class PersistenceConnector {
     }
 
     private verifyStatementMethod(method: string, keyword: string, sql: string): Promise<void> {
-        if (!sql.toLowerCase().split(' ').includes(keyword.toLowerCase())) {
+        if (!sql.toLowerCase().replace(/\s/ug, ' ').split(' ').includes(keyword.toLowerCase())) {
             throw new Error(`${method} method can only be used for '${keyword}' statements`);
         }
         return Promise.resolve();
