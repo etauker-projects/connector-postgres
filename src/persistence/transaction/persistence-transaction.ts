@@ -17,15 +17,22 @@ export class PersistenceTransaction {
         this.open = false;
         this.complete = false;
         this.stack = promise
-            .then(client => {
+            .then(async client => {
                 this.client = client;
-                return this.client.query('BEGIN');
+                await this.client.query('BEGIN');
+                this.open = true;
             })
-            .then(() => this.open = true)
             .catch(error => {
-                console.error(error);
                 this.open = false;
+                throw error;
             });
+    }
+
+    /**
+     * Waits until all queued statements are completed and returns true if the transaction is not closed.
+     */
+    public isOpen (): Promise<boolean> {
+        return this.stack.then(() => this.open);
     }
 
     /**
@@ -88,7 +95,18 @@ export class PersistenceTransaction {
     }
 
     /**
+     * Closes the connection if it is open.
+     */
+    public async closeIfOpen(commit: boolean): Promise<void> {
+        if (await this.isOpen()) {
+            await this.ready();
+            return this.end(commit);
+        }
+    }
+
+    /**
      * Check for inconsistent state done automatically before each database transaction.
+     * @deprecated will be made private in the future, isOpen() should be used instead.
      */
     public ready(): Promise<void> {
         return this.stack.then(() => {
@@ -114,7 +132,6 @@ export class PersistenceTransaction {
         } else if (dataDefinitionCommand.includes(input.command)) {
             return this.getDefaultResult();
         } else {
-            console.warn(`Command '${input.command}' not fully supported`);
             return this.getDefaultResult();
         }
     }

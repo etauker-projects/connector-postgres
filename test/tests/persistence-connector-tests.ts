@@ -4,7 +4,7 @@ import { PersistenceConnector } from '../../src';
 const tests = [
     {
         suite: 'Persistence Connector',
-        name: 'select should return correct results',
+        name: 'select() should return correct results',
         run: async (connector: PersistenceConnector) => {
             const query = SELECT_QUERY;
             const result = await connector.select(query);
@@ -15,7 +15,7 @@ const tests = [
     },
     {
         suite: 'Persistence Connector',
-        name: 'insert should return correct row count',
+        name: 'insert() should return correct row count',
         run: async (connector: PersistenceConnector) => {
             const query = INSERT_QUERY;
             const result = await connector.insert(query);
@@ -25,7 +25,7 @@ const tests = [
     },
     {
         suite: 'Persistence Connector',
-        name: 'select should return correct results after insert',
+        name: 'select() should return correct results after insert',
         run: async (connector: PersistenceConnector) => {
             const query = SELECT_QUERY;
             const result = await connector.select(query);
@@ -36,7 +36,7 @@ const tests = [
     },
     {
         suite: 'Persistence Connector',
-        name: 'insert should fail when unique column is not unique',
+        name: 'insert() should fail when unique column is not unique',
         run: async (connector: PersistenceConnector) => {
             try {
                 await connector.insert(INSERT_NOT_UNIQUE_QUERY);
@@ -50,7 +50,7 @@ const tests = [
     },
     {
         suite: 'Persistence Connector',
-        name: 'select should return correct results after insert of not unique value',
+        name: 'select() should return correct results after insert of not unique value',
         run: async (connector: PersistenceConnector) => {
             const query = SELECT_QUERY;
             const result = await connector.select(query);
@@ -61,7 +61,7 @@ const tests = [
     },
     {
         suite: 'Persistence Connector',
-        name: 'update should return correct row count',
+        name: 'update() should return correct row count',
         run: async (connector: PersistenceConnector) => {
             const query = UPDATE_QUERY;
             const result = await connector.update(query);
@@ -71,7 +71,7 @@ const tests = [
     },
     {
         suite: 'Persistence Connector',
-        name: 'select should return correct results after update',
+        name: 'select() should return correct results after update',
         run: async (connector: PersistenceConnector) => {
             const query = SELECT_QUERY;
             const result = await connector.select(query);
@@ -82,7 +82,7 @@ const tests = [
     },
     {
         suite: 'Persistence Connector',
-        name: 'delete should return correct row count',
+        name: 'delete() should return correct row count',
         run: async (connector: PersistenceConnector) => {
             const query = DELETE_QUERY;
             const result = await connector.delete(query);
@@ -92,7 +92,7 @@ const tests = [
     },
     {
         suite: 'Persistence Connector',
-        name: 'select should return correct results after delete',
+        name: 'select() should return correct results after delete',
         run: async (connector: PersistenceConnector) => {
             const query = SELECT_QUERY;
             const result = await connector.select(query);
@@ -103,7 +103,7 @@ const tests = [
     },
     {
         suite: 'Persistence Connector',
-        name: 'insert should fail when not_null column is null',
+        name: 'insert() should fail when not_null column is null',
         run: async (connector: PersistenceConnector) => {
             try {
                 await connector.insert(INSERT_NULL_QUERY);
@@ -117,7 +117,7 @@ const tests = [
     },
     {
         suite: 'Persistence Connector',
-        name: 'select should return correct results after null insert',
+        name: 'select() should return correct results after null insert',
         run: async (connector: PersistenceConnector) => {
             const query = SELECT_QUERY;
             const result = await connector.select(query);
