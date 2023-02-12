@@ -124,3 +124,14 @@ Removed
 
 Changed 
 - migrations and code logic to use helper functions in the provided schema
+
+### Version 4.1.0
+Added
+- PersistenceTransaction.isOpen() method
+- PersistenceTransaction.closeIfOpen() method
+
+Removed 
+- logging directly through global console methods
+
+Changed 
+- verifyStatementMethod to split words by any whitespace instead of only spaces
