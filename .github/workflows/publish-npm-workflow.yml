@@ -30,7 +30,7 @@ jobs:
         with:
           node-version-file: ${{ env.NVMRC_FILE }}
           registry-url: ${{ env.NPM_REGISTRY_URL }}
-          scope: '@etauker'
+          scope: '@etauker-projects'
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
