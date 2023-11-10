@@ -4,10 +4,6 @@ on:
   push:
     branches: [ "main" ]
 
-  # for testing
-  pull_request:
-    branches: [ "main" ]
-
 env:
   NPM_REGISTRY_URL: https://npm.pkg.github.com
   NVMRC_FILE: ./config/.nvmrc
